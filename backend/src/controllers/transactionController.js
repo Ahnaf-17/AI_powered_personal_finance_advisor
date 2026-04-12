@@ -36,8 +36,16 @@ const createTransaction = async (req, res) => {
   if (!type || !amount || !category)
     return res.status(400).json({ message: 'type, amount and category are required.' });
 
+  const validTypes = ['income', 'expense'];
+  if (!validTypes.includes(type))
+    return res.status(400).json({ message: `type must be one of: ${validTypes.join(', ')}.` });
+
+  const parsedAmount = Number(amount);
+  if (isNaN(parsedAmount) || parsedAmount <= 0)
+    return res.status(400).json({ message: 'amount must be a positive number.' });
+
   const tx = await Transaction.create({
-    user: req.user._id, type, amount, category,
+    user: req.user._id, type, amount: parsedAmount, category,
     description: description || '',
     date: date ? new Date(date) : new Date(),
   });
@@ -50,8 +58,17 @@ const updateTransaction = async (req, res) => {
   if (!tx) return res.status(404).json({ message: 'Transaction not found.' });
 
   const { type, amount, category, description, date } = req.body;
+  const validTypes = ['income', 'expense'];
+  if (type !== undefined && !validTypes.includes(type))
+    return res.status(400).json({ message: `type must be one of: ${validTypes.join(', ')}.` });
+
+  if (amount !== undefined) {
+    const parsedAmount = Number(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0)
+      return res.status(400).json({ message: 'amount must be a positive number.' });
+    tx.amount = parsedAmount;
+  }
   if (type)        tx.type        = type;
-  if (amount)      tx.amount      = amount;
   if (category)    tx.category    = category;
   if (description !== undefined) tx.description = description;
   if (date)        tx.date        = new Date(date);
