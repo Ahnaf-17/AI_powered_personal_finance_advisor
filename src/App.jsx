@@ -60,6 +60,31 @@ const AppLayout = ({ children }) => (
   </div>
 );
 
+const NotFound = () => {
+  const navigate = useNavigate();
+  return (
+    <div className="min-h-screen bg-[#080c14] flex items-center justify-center px-4">
+      <div className="text-center space-y-6 max-w-md">
+        <div className="text-8xl font-black bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">404</div>
+        <div>
+          <h1 className="text-2xl font-bold text-white mb-2">Page not found</h1>
+          <p className="text-slate-500 text-sm">The page you are looking for does not exist or has been moved.</p>
+        </div>
+        <div className="flex gap-3 justify-center">
+          <button onClick={() => navigate(-1)}
+            className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
+            Go back
+          </button>
+          <button onClick={() => navigate("/")}
+            className="px-4 py-2 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 transition-all">
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -72,7 +97,7 @@ export default function App() {
           <Route path="/insights"     element={<ProtectedRoute><AppLayout><Insights /></AppLayout></ProtectedRoute>} />
           <Route path="/ai-advisor"   element={<ProtectedRoute><AppLayout><AIAdvisor /></AppLayout></ProtectedRoute>} />
           <Route path="/chat"         element={<ProtectedRoute><AppLayout><Chatbot /></AppLayout></ProtectedRoute>} />
-          <Route path="*"             element={<Navigate to="/" replace />} />
+          <Route path="*"             element={<NotFound />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

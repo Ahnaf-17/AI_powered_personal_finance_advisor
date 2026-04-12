@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const NAV_ITEMS = [
@@ -13,7 +13,19 @@ const NAV_ITEMS = [
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close mobile menu when route changes
+  useEffect(() => { setOpen(false); }, [location.pathname]);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const handleLogout = () => { logout(); navigate("/login"); };
 
@@ -34,7 +46,7 @@ export default function Navbar() {
     : "?";
 
   return (
-    <nav className="bg-[#0d1117]/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-40">
+    <nav ref={menuRef} className="bg-[#0d1117]/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-40">
       {/* subtle top accent line */}
       <div className="h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">

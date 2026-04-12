@@ -12,9 +12,20 @@ export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
 
+  const validateForm = () => {
+    if (!name.trim() || name.trim().length < 2) return "Full name must be at least 2 characters.";
+    if (!email.trim()) return "Email address is required.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Please enter a valid email address.";
+    if (password.length < 6) return "Password must be at least 6 characters.";
+    if (!/[A-Z]/.test(password)) return "Password must contain at least one uppercase letter.";
+    if (!/[0-9]/.test(password)) return "Password must contain at least one number.";
+    return null;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault(); setError("");
-    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    const validationError = validateForm();
+    if (validationError) { setError(validationError); return; }
     setLoading(true);
     try { await register(name, email, password); navigate("/"); }
     catch (err) { setError(err.response?.data?.message || "Registration failed. Please try again."); }
