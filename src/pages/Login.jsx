@@ -11,8 +11,17 @@ export default function Login() {
   const { login } = useAuth();
   const navigate  = useNavigate();
 
+  const validateForm = () => {
+    if (!email.trim()) return "Email address is required.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Please enter a valid email address.";
+    if (!password) return "Password is required.";
+    return null;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const validationError = validateForm();
+    if (validationError) { setError(validationError); return; }
     setError(""); setLoading(true);
     try { await login(email, password); navigate("/"); }
     catch (err) { setError(err.response?.data?.message || "Invalid email or password."); }
