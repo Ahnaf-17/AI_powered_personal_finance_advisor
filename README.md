@@ -149,34 +149,3 @@ Once both servers are running, open `http://localhost:5173`, click **Create Acco
 | POST | `/api/ai/savings-suggestions` | AI savings tips | Yes |
 | POST | `/api/ai/chat` | Chat with AI advisor | Yes |
 
----
-
-## Branches
-
-| Branch | Purpose |
-|--------|---------|
-| `main` | Integration branch — stable, reviewed code only |
-| `feature/ai-quality-lead` | Monsur's branch — AI features, models, test plan, docs |
-
----
-
-## Documentation
-
-All project documentation is in the [`docs/`](./docs/) folder:
-
-- [`ai-workflow-design.md`](./docs/ai-workflow-design.md) – AI system architecture and prompt engineering
-- [`ai-feature-requirements.md`](./docs/ai-feature-requirements.md) – 24 functional requirements, 12 user stories
-- [`test-plan-draft.md`](./docs/test-plan-draft.md) – 40 test cases across 5 test areas
-- [`risk-register-updated.md`](./docs/risk-register-updated.md) – Risk register v1.2 (10 risks)
-
----
-
-## Contributing
-
-Pull requests are welcome. For major changes, please open an issue first to discuss what you'd like to change.
-
----
-
-## License
-
-MIT License — see [LICENSE](./LICENSE) for details.
