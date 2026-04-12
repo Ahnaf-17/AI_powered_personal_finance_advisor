@@ -20,13 +20,13 @@ export default function Navbar() {
   const linkClass = ({ isActive }) =>
     `flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150 ${
       isActive
-        ? "bg-white/15 text-white"
-        : "text-indigo-200 hover:bg-white/10 hover:text-white"
+        ? "bg-indigo-500/20 text-indigo-300 shadow-sm shadow-indigo-500/20"
+        : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
     }`;
 
   const mobileLinkClass = ({ isActive }) =>
-    `flex items-center gap-3 px-4 py-3.5 text-sm font-medium border-b border-white/10 transition-all duration-150 ${
-      isActive ? "bg-white/15 text-white" : "text-indigo-200 hover:bg-white/10 hover:text-white"
+    `flex items-center gap-3 px-4 py-3.5 text-sm font-medium border-b border-white/5 transition-all duration-150 ${
+      isActive ? "bg-indigo-500/20 text-indigo-300" : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
     }`;
 
   const initials = user?.name
@@ -34,19 +34,17 @@ export default function Navbar() {
     : "?";
 
   return (
-    <nav className="bg-gradient-to-r from-indigo-700 via-indigo-600 to-violet-600 shadow-lg shadow-indigo-900/20 sticky top-0 z-40">
+    <nav className="bg-[#0d1117]/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-40">
+      {/* subtle top accent line */}
+      <div className="h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <NavLink
-            to="/"
-            className="flex items-center gap-2.5 text-white font-bold text-lg tracking-tight"
-            onClick={() => setOpen(false)}
-          >
-            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-base">
+          <NavLink to="/" className="flex items-center gap-2.5 font-bold text-lg tracking-tight" onClick={() => setOpen(false)}>
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-base shadow-lg shadow-indigo-500/30">
               💰
             </div>
-            <span className="hidden xs:block">FinanceAdvisor</span>
+            <span className="bg-gradient-to-r from-indigo-300 to-violet-300 bg-clip-text text-transparent">FinanceAdvisor</span>
           </NavLink>
 
           {/* Desktop nav */}
@@ -61,20 +59,16 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* Right — avatar + logout */}
+          {/* Right */}
           <div className="hidden md:flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/5">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold">
                 {initials}
               </div>
-              <span className="text-indigo-100 text-sm font-medium max-w-24 truncate">
-                {user?.name?.split(" ")[0]}
-              </span>
+              <span className="text-slate-300 text-sm font-medium max-w-24 truncate">{user?.name?.split(" ")[0]}</span>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium bg-white/10 hover:bg-red-500/80 text-white transition-all duration-150"
-            >
+            <button onClick={handleLogout}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-slate-400 hover:bg-red-500/10 hover:text-red-400 border border-white/5 hover:border-red-500/20 transition-all duration-150">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
@@ -83,27 +77,18 @@ export default function Navbar() {
           </div>
 
           {/* Mobile hamburger */}
-          <button
-            className="md:hidden text-white p-2 rounded-xl hover:bg-white/10 transition-colors"
-            onClick={() => setOpen((o) => !o)}
-            aria-label="Toggle navigation menu"
-          >
-            {open ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
+          <button className="md:hidden text-slate-400 p-2 rounded-xl hover:bg-white/5 transition-colors" onClick={() => setOpen((o) => !o)} aria-label="Toggle menu">
+            {open
+              ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+            }
           </button>
         </div>
       </div>
 
       {/* Mobile dropdown */}
       {open && (
-        <div className="md:hidden bg-indigo-700/95 backdrop-blur border-t border-white/10">
+        <div className="md:hidden bg-[#0d1117]/95 backdrop-blur border-t border-white/5">
           {NAV_ITEMS.map(({ to, label, icon }) => (
             <NavLink key={to} to={to} className={mobileLinkClass} onClick={() => setOpen(false)}>
               <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
@@ -112,17 +97,12 @@ export default function Navbar() {
               {label}
             </NavLink>
           ))}
-          <div className="px-4 py-4 flex items-center justify-between border-t border-white/10">
+          <div className="px-4 py-4 flex items-center justify-between border-t border-white/5">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold">
-                {initials}
-              </div>
-              <span className="text-indigo-100 text-sm">{user?.name}</span>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold">{initials}</div>
+              <span className="text-slate-300 text-sm">{user?.name}</span>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium bg-red-500/80 hover:bg-red-600 text-white transition-colors"
-            >
+            <button onClick={handleLogout} className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>

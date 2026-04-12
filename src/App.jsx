@@ -12,10 +12,10 @@ import Register   from './pages/Register';
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return (
-    <div className="flex items-center justify-center h-screen bg-slate-50">
+    <div className="flex items-center justify-center h-screen bg-[#080c14]">
       <div className="flex flex-col items-center gap-3">
-        <div className="w-10 h-10 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin"></div>
-        <p className="text-sm text-slate-400 font-medium">Loading...</p>
+        <div className="w-10 h-10 rounded-full border-4 border-indigo-900 border-t-indigo-400 animate-spin"></div>
+        <p className="text-sm text-slate-500 font-medium tracking-widest uppercase">Loading...</p>
       </div>
     </div>
   );
@@ -49,7 +49,7 @@ const ChatFAB = () => {
 };
 
 const AppLayout = ({ children }) => (
-  <div className="min-h-screen bg-slate-50">
+  <div className="min-h-screen bg-[#080c14]">
     <Navbar />
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">{children}</main>
     <ChatFAB />

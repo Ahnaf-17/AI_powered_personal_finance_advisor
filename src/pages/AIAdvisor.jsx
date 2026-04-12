@@ -1,137 +1,156 @@
-import { useState } from "react";
-import { getBudgetAdvice, getSavingsSuggestions } from "../services/api";
+import { useState, useEffect } from "react";
+import { getAIInsights, getTransactions, getGoals } from "../services/api";
 
-const Spinner = () => (
-  <span className="flex items-center justify-center gap-2">
-    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-    </svg>
-    Analysing...
-  </span>
-);
+const TIP_ICONS = { savings:"💰", budget:"📊", debt:"💳", investment:"📈", emergency:"🛡️" };
 
-function AdvisorCard({ gradient, icon, iconBg, title, subtitle, btnGradient, btnShadow, onFetch, loading, error, content, emptyIcon, emptyText }) {
+function InsightCard({ insight, idx }) {
+  const [open, setOpen] = useState(idx === 0);
+  const icon = Object.entries(TIP_ICONS).find(([k]) => insight.category?.toLowerCase().includes(k))?.[1] ?? "✨";
+  const gradients = [
+    "from-indigo-600/20 to-violet-600/10 border-indigo-500/20",
+    "from-emerald-600/20 to-cyan-600/10 border-emerald-500/20",
+    "from-amber-600/20 to-orange-600/10 border-amber-500/20",
+    "from-rose-600/20 to-pink-600/10 border-rose-500/20",
+    "from-cyan-600/20 to-blue-600/10 border-cyan-500/20",
+  ];
+  const g = gradients[idx % gradients.length];
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-      {/* Header strip */}
-      <div className={`bg-gradient-to-r ${gradient} p-5 text-white relative overflow-hidden`}>
-        <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full"></div>
-        <div className="absolute -right-2 -bottom-8 w-16 h-16 bg-white/5 rounded-full"></div>
-        <div className="relative flex items-center gap-3">
-          <div className={`w-11 h-11 rounded-2xl ${iconBg} flex items-center justify-center text-2xl`}>{icon}</div>
-          <div>
-            <h2 className="font-bold text-lg leading-tight">{title}</h2>
-            <p className="text-xs text-white/70 mt-0.5">{subtitle}</p>
-          </div>
+    <div className={`bg-gradient-to-br ${g} border rounded-2xl overflow-hidden transition-all`}>
+      <button className="w-full flex items-center gap-3 p-4 text-left" onClick={() => setOpen(o=>!o)}>
+        <span className="text-2xl">{icon}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-slate-200 leading-tight">{insight.title || "Insight"}</p>
+          {insight.category && <p className="text-xs text-slate-500 capitalize mt-0.5">{insight.category}</p>}
         </div>
-      </div>
-
-      {/* Body */}
-      <div className="p-5 flex flex-col flex-1 gap-4">
-        <button onClick={onFetch} disabled={loading}
-          className={`w-full bg-gradient-to-r ${btnGradient} hover:opacity-90 text-white font-semibold py-2.5 rounded-xl text-sm transition-all duration-200 shadow-md ${btnShadow} disabled:opacity-50 active:scale-[0.98]`}>
-          {loading ? <Spinner /> : `Get ${title.split(" ")[0]} ${title.split(" ")[1] || ""}`}
-        </button>
-
-        {error && (
-          <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
-            <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
-            </svg>
-            {error}
-          </div>
-        )}
-
-        {content && (
-          <div className="bg-slate-50 rounded-xl p-4 flex-1 text-sm text-slate-700 leading-relaxed space-y-1.5 overflow-y-auto max-h-72">
-            {content.split("\n").map((line, i) => (
-              <p key={i} className={line.trim() === "" ? "mt-1" : ""}>{line}</p>
-            ))}
-          </div>
-        )}
-
-        {!content && !error && !loading && (
-          <div className="flex-1 flex flex-col items-center justify-center text-slate-300 py-8 text-center">
-            <span className="text-5xl block mb-3">{emptyIcon}</span>
-            <p className="text-sm">{emptyText}</p>
-          </div>
-        )}
-      </div>
+        <div className={`w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-slate-400 transition-transform duration-200 ${open?"rotate-180":""}`}>
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      {open && (
+        <div className="px-4 pb-4 pt-0">
+          <p className="text-sm text-slate-400 leading-relaxed">{insight.description || insight.message || insight.content}</p>
+          {insight.actionItems?.length > 0 && (
+            <ul className="mt-3 space-y-1.5">
+              {insight.actionItems.map((item,i) => (
+                <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                  <span className="mt-0.5 w-4 h-4 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold flex-shrink-0">{i+1}</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
 export default function AIAdvisor() {
-  const [budgetAdvice,   setBudgetAdvice]   = useState("");
-  const [savingsTips,    setSavingsTips]    = useState("");
-  const [loadingBudget,  setLoadingBudget]  = useState(false);
-  const [loadingSavings, setLoadingSavings] = useState(false);
-  const [budgetError,    setBudgetError]    = useState("");
-  const [savingsError,   setSavingsError]   = useState("");
+  const [insights,  setInsights]  = useState([]);
+  const [loading,   setLoading]   = useState(true);
+  const [error,     setError]     = useState("");
+  const [txTotal,   setTxTotal]   = useState({ income:0, expense:0, txCount:0 });
+  const [goalStats, setGoalStats] = useState({ count:0, pct:0 });
 
-  const handleBudgetAdvice = async () => {
-    setBudgetError(""); setBudgetAdvice(""); setLoadingBudget(true);
-    try { const { data } = await getBudgetAdvice(); setBudgetAdvice(data.advice); }
-    catch (err) { setBudgetError(err.response?.data?.message || "Failed to get budget advice."); }
-    finally { setLoadingBudget(false); }
-  };
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [insRes, txRes, gRes] = await Promise.allSettled([
+          getAIInsights(), getTransactions(), getGoals()
+        ]);
+        if (insRes.status === "fulfilled") {
+          const d = insRes.value.data;
+          setInsights(Array.isArray(d) ? d : d?.insights ?? []);
+        } else {
+          setError("Unable to fetch AI insights right now.");
+        }
+        if (txRes.status === "fulfilled") {
+          const txs = txRes.value.data;
+          const income  = txs.filter(t=>t.type==="income").reduce((a,t)=>a+t.amount,0);
+          const expense = txs.filter(t=>t.type==="expense").reduce((a,t)=>a+t.amount,0);
+          setTxTotal({ income, expense, txCount: txs.length });
+        }
+        if (gRes.status === "fulfilled") {
+          const gs = gRes.value.data;
+          const done = gs.filter(g=>g.isCompleted).length;
+          const avgPct = gs.length ? gs.reduce((a,g)=>a+Math.min((g.currentAmount/g.targetAmount)*100,100),0)/gs.length : 0;
+          setGoalStats({ count: gs.length, pct: Math.round(avgPct), done });
+        }
+      } finally { setLoading(false); }
+    };
+    load();
+  }, []);
 
-  const handleSavingsTips = async () => {
-    setSavingsError(""); setSavingsTips(""); setLoadingSavings(true);
-    try { const { data } = await getSavingsSuggestions(); setSavingsTips(data.suggestions); }
-    catch (err) { setSavingsError(err.response?.data?.message || "Failed to get savings suggestions."); }
-    finally { setLoadingSavings(false); }
-  };
+  const metrics = [
+    { icon:"💸", label:"Total Expenses",  val:`$${txTotal.expense.toLocaleString()}`, sub:`${txTotal.txCount} transactions`, color:"text-rose-400",    bg:"bg-rose-500/10 border-rose-500/20" },
+    { icon:"💰", label:"Total Income",    val:`$${txTotal.income.toLocaleString()}`,  sub:"Recorded income",                 color:"text-emerald-400", bg:"bg-emerald-500/10 border-emerald-500/20" },
+    { icon:"🎯", label:"Goals Progress",  val:`${goalStats.pct}%`,                    sub:`${goalStats.count} active goals`, color:"text-indigo-400",  bg:"bg-indigo-500/10 border-indigo-500/20" },
+  ];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">AI Financial Advisor</h1>
-        <p className="text-slate-500 text-sm mt-1">Personalised recommendations powered by your real spending data.</p>
+        <h1 className="text-2xl font-bold text-white tracking-tight">AI Financial Advisor</h1>
+        <p className="text-slate-500 text-sm mt-1">Personalised insights powered by your financial data.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <AdvisorCard
-          gradient="from-indigo-600 to-violet-600"
-          icon="📊"
-          iconBg="bg-white/20"
-          title="Budget Recommendations"
-          subtitle="Based on your last 90 days of spending"
-          btnGradient="from-indigo-600 to-violet-600"
-          btnShadow="shadow-indigo-200"
-          onFetch={handleBudgetAdvice}
-          loading={loadingBudget}
-          error={budgetError}
-          content={budgetAdvice}
-          emptyIcon="📋"
-          emptyText="Click above to analyse your spending"
-        />
-        <AdvisorCard
-          gradient="from-emerald-500 to-teal-600"
-          icon="💡"
-          iconBg="bg-white/20"
-          title="Savings Suggestions"
-          subtitle="Find opportunities to save more each month"
-          btnGradient="from-emerald-500 to-teal-600"
-          btnShadow="shadow-emerald-200"
-          onFetch={handleSavingsTips}
-          loading={loadingSavings}
-          error={savingsError}
-          content={savingsTips}
-          emptyIcon="💰"
-          emptyText="Click above to find savings opportunities"
-        />
+      {/* financial snapshot */}
+      <div className="grid grid-cols-3 gap-4">
+        {metrics.map(m => (
+          <div key={m.label} className={`rounded-2xl border p-4 ${m.bg}`}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">{m.icon}</span>
+              <p className="text-xs text-slate-500 font-medium">{m.label}</p>
+            </div>
+            <p className={`text-xl font-bold ${m.color}`}>{m.val}</p>
+            <p className="text-xs text-slate-700 mt-0.5">{m.sub}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Disclaimer */}
-      <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4">
-        <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-        <p className="text-xs text-amber-700 leading-relaxed">
-          All AI recommendations are for informational purposes only and do not constitute licensed financial advice.
-          Please consult a qualified financial adviser before making significant financial decisions.
+      {/* insights feed */}
+      <div className="bg-[#0d1117] rounded-2xl border border-white/5 p-6">
+        <div className="flex items-center gap-2 mb-5">
+          <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center text-sm">🤖</div>
+          <h2 className="text-sm font-bold text-slate-300">AI Insights</h2>
+          {!loading && insights.length > 0 && (
+            <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+              {insights.length} tips
+            </span>
+          )}
+        </div>
+
+        {loading && (
+          <div className="flex flex-col items-center py-12 gap-3">
+            <div className="w-8 h-8 rounded-full border-4 border-indigo-900 border-t-indigo-400 animate-spin"></div>
+            <p className="text-slate-600 text-sm">Analysing your finances...</p>
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm px-4 py-3 rounded-xl">{error}</div>
+        )}
+
+        {!loading && !error && insights.length === 0 && (
+          <div className="text-center py-12 text-slate-600">
+            <span className="text-4xl block mb-2">🤖</span>
+            <p className="text-sm font-medium">No insights yet.</p>
+            <p className="text-xs mt-1 text-slate-700">Add some transactions to get personalised advice.</p>
+          </div>
+        )}
+
+        {!loading && !error && insights.length > 0 && (
+          <div className="space-y-3">
+            {insights.map((ins,i) => <InsightCard key={i} insight={ins} idx={i} />)}
+          </div>
+        )}
+      </div>
+
+      {/* disclaimer */}
+      <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex gap-3">
+        <span className="text-lg flex-shrink-0">⚠️</span>
+        <p className="text-xs text-amber-400/90 leading-relaxed">
+          <strong className="font-semibold">Disclaimer:</strong> AI-generated insights are for educational purposes only and do not constitute professional financial advice. Please consult a licensed financial adviser for personalised guidance.
         </p>
       </div>
     </div>
