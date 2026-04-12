@@ -1,19 +1,18 @@
 ﻿# AI-Powered Personal Finance Advisor
 
-> COIT20273 – Software Design and Development Project | HT1, 2026
-> CQUniversity Australia
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react) ![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=node.js) ![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?logo=mongodb) ![License](https://img.shields.io/badge/license-MIT-blue)
 
-A full-stack web application that combines transaction management, spending analytics, and Generative AI to help users make smarter personal finance decisions.
+A full-stack web application that helps you take control of your personal finances. Track income and expenses, set savings goals, visualise spending with charts, and get AI-powered budget advice — all in one place.
 
 ---
 
-## Team
+## Built By
 
-| Name | Student ID | Role |
-|------|-----------|------|
-| Ahnaf Ahmed | — | Team Leader / Frontend Lead |
-| Shakir Uddin Ahmed | — | Backend Lead |
-| Md Monsur Hossain | 12285748 | AI & Quality Lead |
+| Developer | GitHub | Role |
+|-----------|--------|------|
+| Ahnaf Ahmed | [@Ahnaf-17](https://github.com/Ahnaf-17) | Team Lead / Frontend |
+| Shakir Uddin Ahmed | — | Backend / Database |
+| Md Monsur Hossain | [@mdmhossainn](https://github.com/mdmhossainn) | AI Integration / QA |
 
 ---
 
@@ -91,8 +90,8 @@ AI_powered_personal_finance_advisor/
 
 ### Prerequisites
 - Node.js v18+
-- MongoDB (local or MongoDB Atlas)
-- OpenAI API key **or** Groq API key (free)
+- OpenAI API key **or** [Groq API key](https://console.groq.com) (free)
+- MongoDB — **not required locally** (uses in-memory DB automatically in dev mode)
 
 ### 1. Clone the repository
 ```bash
@@ -112,22 +111,27 @@ Frontend runs at `http://localhost:5173`
 cd backend
 npm install
 cp .env.example .env
-# Edit .env with your MongoDB URI and API keys
 npm run dev
 ```
 Backend runs at `http://localhost:5000`
 
+> **No MongoDB needed locally** — the backend automatically starts an in-memory MongoDB instance for development. Data resets on restart. For persistent storage, set `MONGODB_URI` to a [MongoDB Atlas](https://cloud.mongodb.com) connection string.
+
 ### 4. Environment variables (`backend/.env`)
 ```env
 PORT=5000
-MONGO_URI=mongodb://localhost:27017/finance_advisor
-JWT_SECRET=your_jwt_secret_here
+MONGODB_URI=mongodb://localhost:27017/finance_advisor
+JWT_SECRET=your_long_random_secret_here
 OPENAI_API_KEY=your_api_key_here
+OPENAI_MODEL=gpt-3.5-turbo
 
 # Optional: use Groq free tier instead of OpenAI
 # AI_BASE_URL=https://api.groq.com/openai/v1
 # OPENAI_MODEL=llama3-8b-8192
 ```
+
+### 5. Register and log in
+Once both servers are running, open `http://localhost:5173`, click **Create Account**, and start tracking your finances.
 
 ---
 
@@ -167,16 +171,12 @@ All project documentation is in the [`docs/`](./docs/) folder:
 
 ---
 
-## Assessment
+## Contributing
 
-This project is submitted for **COIT20273 Assessment 2 – Progress Reports** at CQUniversity Australia, HT1 2026.
-
-- Progress Report 1 due: 13 April 2026
-- Progress Report 2 due: 11 May 2026
-- Unit Coordinator: Meena Jha
+Pull requests are welcome. For major changes, please open an issue first to discuss what you'd like to change.
 
 ---
 
 ## License
 
-Academic project — CQUniversity Australia, 2026. Not for commercial use.
+MIT License — see [LICENSE](./LICENSE) for details.
