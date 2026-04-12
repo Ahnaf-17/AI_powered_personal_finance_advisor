@@ -3,6 +3,19 @@ import { getAIInsights, getTransactions, getGoals } from "../services/api";
 
 const TIP_ICONS = { savings:"💰", budget:"📊", debt:"💳", investment:"📈", emergency:"🛡️" };
 
+// Parse a plain-text numbered advice string into individual insight cards
+function parseAdviceToInsights(advice) {
+  const clean = advice.split('\n\n---\n')[0].replace(/\*\*/g, '');
+  const items = [...clean.matchAll(/\d+\.\s+([^\n]+(?:\n(?!\d+\.)[^\n]+)*)/g)];
+  if (items.length > 0) {
+    return items.map(m => {
+      const lines = m[1].trim().split(/:\s*(.+)/);
+      return { title: lines[0]?.trim() || 'Tip', description: lines.slice(1).join('').trim() || m[1].trim(), category: 'budget' };
+    });
+  }
+  return [{ title: 'Budget Recommendations', description: clean.trim(), category: 'budget' }];
+}
+
 function InsightCard({ insight, idx }) {
   const [open, setOpen] = useState(idx === 0);
   const icon = Object.entries(TIP_ICONS).find(([k]) => insight.category?.toLowerCase().includes(k))?.[1] ?? "✨";
@@ -28,7 +41,7 @@ function InsightCard({ insight, idx }) {
       </button>
       {open && (
         <div className="px-4 pb-4 pt-0">
-          <p className="text-sm text-slate-400 leading-relaxed">{insight.description || insight.message || insight.content}</p>
+          <p className="text-sm text-slate-400 leading-relaxed whitespace-pre-line">{insight.description || insight.message || insight.content}</p>
           {insight.actionItems?.length > 0 && (
             <ul className="mt-3 space-y-1.5">
               {insight.actionItems.map((item,i) => (
@@ -60,7 +73,15 @@ export default function AIAdvisor() {
         ]);
         if (insRes.status === "fulfilled") {
           const d = insRes.value.data;
-          setInsights(Array.isArray(d) ? d : d?.insights ?? []);
+          if (Array.isArray(d)) {
+            setInsights(d);
+          } else if (d?.insights) {
+            setInsights(d.insights);
+          } else if (d?.advice) {
+            setInsights(parseAdviceToInsights(d.advice));
+          } else {
+            setInsights([]);
+          }
         } else {
           setError("Unable to fetch AI insights right now.");
         }

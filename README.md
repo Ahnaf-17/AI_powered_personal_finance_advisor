@@ -1,6 +1,5 @@
 ﻿# AI-Powered Personal Finance Advisor
 
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white) ![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-8-47A248?logo=mongodb&logoColor=white) ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white) ![TailwindCSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)
 
 A full-stack web application that helps you take control of your personal finances. Track income and expenses, set savings goals, visualise spending with interactive charts, and get AI-powered budget advice — all wrapped in a dark futuristic UI.
 
@@ -45,40 +44,106 @@ A full-stack web application that helps you take control of your personal financ
 - **JWT** authentication
 - **bcryptjs** password hashing
 - **Helmet** + **CORS** security
-- **OpenAI API** (optional — falls back gracefully)
+- **OpenAI API** 
 
 ---
 
-## Prerequisites
+## Prerequisites — Install These First
 
-Make sure you have the following installed:
 
-| Tool | Version | Download |
-|------|---------|----------|
-| Node.js | 18 or higher | https://nodejs.org |
-| Git | Any | https://git-scm.com |
-| MongoDB | 6+ (optional — see below) | https://www.mongodb.com/try/download/community |
 
-> **No MongoDB installed?** No problem. The app automatically falls back to an **in-memory MongoDB** instance for development. Data will not persist across server restarts in that mode.
+### Step 1 — Install Node.js and npm
+
+Node.js is the JavaScript runtime that runs the backend. npm (Node Package Manager) comes bundled with it and is used to install all project libraries.
+
+1. Go to **https://nodejs.org**
+2. Download the **LTS** version (the green button — it says "Recommended for most users")
+3. Run the installer and click **Next** through all steps — keep all defaults
+4. When done, open a terminal (**PowerShell** on Windows, **Terminal** on Mac/Linux) and verify:
+
+```bash
+node --version
+npm --version
+```
+
+You should see something like `v22.x.x` and `10.x.x`. If you do, Node.js and npm are ready.
+
+---
+
+### Step 2 — Install Git
+
+Git is used to download (clone) this project from GitHub.
+
+1. Go to **https://git-scm.com/downloads**
+2. Download and run the installer — keep all defaults and click **Next**
+3. Verify it works:
+
+```bash
+git --version
+```
+
+You should see something like `git version 2.x.x`.
+
+---
+
+### Step 3 — Get MongoDB (choose one option)
+
+MongoDB is the database that stores your transactions and goals.
+
+#### Option A — Use the bundled portable MongoDB (easiest, no install needed)
+
+The app will **automatically download and run a portable MongoDB** the first time you start the backend in development mode. No action needed — just proceed to Step 4.
+
+> You will see `⚡ Using in-memory MongoDB (dev mode)` in the terminal. This works fine but **data is lost when the server stops**.
+
+#### Option B — Install MongoDB Community (recommended for persistent data)
+
+1. Go to **https://www.mongodb.com/try/download/community**
+2. Select **Version: 8.x**, **Platform: Windows**, **Package: MSI**
+3. Click **Download** and run the installer
+4. Keep all defaults — make sure **"Install MongoDB as a Service"** is ticked
+5. After install, MongoDB will start automatically in the background
+6. Verify it's running:
+
+```powershell
+# Windows — check if MongoDB is listening on port 27017
+netstat -ano | findstr ":27017"
+```
+
+You should see a line with `LISTENING`. If you do, MongoDB is running.
 
 ---
 
 ## Installation & Setup
 
-### 1. Clone the repository
+### Step 4 — Clone the repository
+
+Open a terminal and run:
 
 ```bash
 git clone https://github.com/Ahnaf-17/AI_powered_personal_finance_advisor.git
 cd AI_powered_personal_finance_advisor
 ```
 
-### 2. Install frontend dependencies
+This downloads the project into a folder called `AI_powered_personal_finance_advisor` and navigates into it.
+
+---
+
+### Step 5 — Install frontend dependencies
+
+From inside the project folder, run:
 
 ```bash
 npm install
 ```
 
-### 3. Install backend dependencies
+This reads `package.json` and downloads all the React/Vite/Tailwind libraries into a `node_modules` folder. It may take 1–2 minutes.
+
+---
+
+### Step 6 — Install backend dependencies
+
+Now go into the backend folder and do the same:
 
 ```bash
 cd backend
@@ -86,80 +151,134 @@ npm install
 cd ..
 ```
 
-### 4. Configure environment variables
+This installs Express, Mongoose, JWT, and all other backend libraries.
 
-The backend `.env` file is at `backend/.env`. Edit it with your values:
+---
+
+### Step 7 — Configure environment variables
+
+The backend needs a `.env` file with secret settings. One may already exist — check if `backend/.env` exists. If not, create it:
+
+```bash
+# Windows PowerShell
+New-Item backend/.env
+```
+
+Open `backend/.env` in any text editor (Notepad is fine) and paste:
 
 ```env
 NODE_ENV=development
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/finance_advisor
-JWT_SECRET=replace_with_a_long_random_secret
+JWT_SECRET=change_this_to_any_long_random_string_abc123xyz
 JWT_EXPIRES_IN=7d
 
-# Optional — AI features (leave blank to disable AI endpoints)
-OPENAI_API_KEY=your_openai_api_key_here
+# Optional — only needed for real AI responses
+# Leave these blank if you don't have an OpenAI key
+OPENAI_API_KEY=
 OPENAI_MODEL=gpt-3.5-turbo
 
 CLIENT_URL=http://localhost:5173
 FRONTEND_URL=http://localhost:5173
 ```
 
-> **AI features are optional.** If `OPENAI_API_KEY` is not set, the AI Advisor and Chatbot pages will show a graceful error message.
+> **AI features are optional.** Without an `OPENAI_API_KEY` the app still works — it shows rule-based budget advice instead.
+
+Save the file.
 
 ---
 
-## Running the Project
+### Step 8 — Start MongoDB (if using Option B from Step 3)
 
-Open **two terminals** from the project root.
+If you installed MongoDB as a Windows Service it is already running. If not, start it manually:
 
-### Terminal 1 — Backend
+```powershell
+# Replace the path below with where your MongoDB binary actually is
+# Default Windows install location:
+& "C:\Program Files\MongoDB\Server\8.0\bin\mongod.exe" --dbpath "C:\data\db" --port 27017
+```
+
+Or if you downloaded the portable binary via the app's auto-download (stored in your user cache):
+
+```powershell
+$mongod = "$env:USERPROFILE\.cache\mongodb-binaries\mongod-x64-win32-8.2.1.exe"
+$dbPath = "$PWD\data\db"
+New-Item -ItemType Directory -Path $dbPath -Force | Out-Null
+Start-Process $mongod -ArgumentList "--dbpath `"$dbPath`" --port 27017 --bind_ip 127.0.0.1" -WindowStyle Hidden
+Write-Host "MongoDB started"
+```
+
+---
+
+### Step 9 — Seed the database with demo data (optional but recommended)
+
+This creates a demo user with 161 realistic transactions and 5 savings goals so you can see the app working immediately.
+
+From the **project root folder**, run:
+
+```bash
+node backend/scripts/seed.js
+```
+
+Expected output:
+```
+✅ Connected to MongoDB: localhost
+👤 Creating demo user...
+💳 Inserted 161 transactions
+🎯 Inserted 5 goals
+
+🎉 Seed complete!
+   Email:    demo@finance.app
+   Password: Demo1234!
+```
+
+> Run this **after** starting MongoDB (Step 8) or the script will time out.
+
+---
+
+### Step 10 — Run the project
+
+You need **two terminals open at the same time**, both in the project root folder.
+
+**Terminal 1 — Start the backend:**
 
 ```bash
 cd backend
 npm run dev
 ```
 
-Expected output:
+Wait until you see:
 ```
 Server running on port 5000
 ✅ MongoDB connected (persistent): localhost
 ```
 
-> If MongoDB is not installed locally, you will see `⚡ Using in-memory MongoDB (dev mode)` instead — this is fine for testing.
-
-### Terminal 2 — Frontend
+**Terminal 2 — Start the frontend (open a new terminal window/tab):**
 
 ```bash
 npm run dev
 ```
 
-Expected output:
+Wait until you see:
 ```
 VITE v8.x.x  ready in xxx ms
 ➜  Local:   http://localhost:5173/
 ```
 
-Open **http://localhost:5173** in your browser.
+Now open **http://localhost:5173** in your browser.
 
 ---
 
-## Demo Account (Pre-seeded Data)
+## Demo Account
 
-To instantly populate the database with realistic transactions and goals, run:
-
-```bash
-node backend/scripts/seed.js
-```
-
-Then log in with:
+If you ran the seed script in Step 9, log in with:
 
 | Field | Value |
 |-------|-------|
 | Email | `demo@finance.app` |
 | Password | `Demo1234!` |
 
-To use a custom account:
+To seed a different account:
 
 ```bash
 node backend/scripts/seed.js --email you@example.com --password MyPass123! --name "Your Name"
@@ -242,43 +361,3 @@ All endpoints are prefixed with `/api`.
 | POST | `/ai/chat` | Send message to AI chatbot |
 
 ---
-
-## Troubleshooting
-
-**Port already in use (EADDRINUSE)**
-```powershell
-# Windows — kill process on port 5000
-$p = (Get-NetTCPConnection -LocalPort 5000 -EA SilentlyContinue | Select -First 1).OwningProcess
-if ($p) { Stop-Process -Id $p -Force }
-```
-
-**Login page keeps refreshing**  
-This was caused by a 401 interceptor calling `window.location.href`. Fixed in the current codebase using React Router navigation instead.
-
-**Data not saving between restarts**  
-Ensure MongoDB is running locally on port 27017. If you see `⚡ Using in-memory MongoDB`, data is not persisted. Install MongoDB Community or use MongoDB Atlas with a connection string in `.env`.
-
-**AI features not working**  
-Add a valid `OPENAI_API_KEY` to `backend/.env`. Alternatively, use the free Groq API by uncommenting the Groq lines at the bottom of `.env`.
-
-```
-
-### 5. Register and log in
-Once both servers are running, open `http://localhost:5173`, click **Create Account**, and start tracking your finances.
-
----
-
-## API Endpoints
-
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/auth/register` | Register new user | No |
-| POST | `/api/auth/login` | Login and get JWT | No |
-| GET | `/api/transactions` | Get all transactions | Yes |
-| POST | `/api/transactions` | Add transaction | Yes |
-| GET | `/api/goals` | Get all goals | Yes |
-| POST | `/api/goals` | Create goal | Yes |
-| POST | `/api/ai/budget-advice` | AI budget recommendations | Yes |
-| POST | `/api/ai/savings-suggestions` | AI savings tips | Yes |
-| POST | `/api/ai/chat` | Chat with AI advisor | Yes |
-
