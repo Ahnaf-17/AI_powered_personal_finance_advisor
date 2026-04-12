@@ -10,6 +10,13 @@ const register = async (req, res) => {
   if (!name || !email || !password)
     return res.status(400).json({ message: 'Please provide name, email and password.' });
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email))
+    return res.status(400).json({ message: 'Please provide a valid email address.' });
+
+  if (password.length < 8)
+    return res.status(400).json({ message: 'Password must be at least 8 characters long.' });
+
   const exists = await User.findOne({ email });
   if (exists)
     return res.status(400).json({ message: 'An account with that email already exists.' });
