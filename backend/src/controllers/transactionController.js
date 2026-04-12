@@ -135,4 +135,40 @@ const getDaily = async (req, res) => {
   res.json(result);
 };
 
-module.exports = { getTransactions, getTransaction, createTransaction, updateTransaction, deleteTransaction, getSummary, getDaily };
+// GET /api/transactions/monthly?months=6  — monthly income vs expense trend
+const getMonthlyTrend = async (req, res) => {
+  const { months = 6 } = req.query;
+  const n = Math.min(Number(months), 24);
+  const since = new Date();
+  since.setMonth(since.getMonth() - (n - 1));
+  since.setDate(1);
+  since.setHours(0, 0, 0, 0);
+
+  const rows = await Transaction.aggregate([
+    { $match: { user: req.user._id, date: { $gte: since } } },
+    { $group: {
+      _id: {
+        year:  { $year: '$date' },
+        month: { $month: '$date' },
+        type:  '$type',
+      },
+      total: { $sum: '$amount' },
+    }},
+    { $sort: { '_id.year': 1, '_id.month': 1 } },
+  ]);
+
+  const result = Array.from({ length: n }, (_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - (n - 1 - i));
+    const year  = d.getFullYear();
+    const month = d.getMonth() + 1;
+    const label = d.toLocaleDateString('en-AU', { month: 'short', year: '2-digit' });
+    const income  = rows.find(r => r._id.year === year && r._id.month === month && r._id.type === 'income')?.total  || 0;
+    const expense = rows.find(r => r._id.year === year && r._id.month === month && r._id.type === 'expense')?.total || 0;
+    return { year, month, label, income, expense, net: income - expense };
+  });
+
+  res.json(result);
+};
+
+module.exports = { getTransactions, getTransaction, createTransaction, updateTransaction, deleteTransaction, getSummary, getDaily, getMonthlyTrend };
