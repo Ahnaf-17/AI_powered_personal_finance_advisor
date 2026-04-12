@@ -1,0 +1,92 @@
+const Transaction = require('../models/Transaction');
+
+// GET /api/transactions
+const getTransactions = async (req, res) => {
+  const { type, category, startDate, endDate, limit = 50, page = 1 } = req.query;
+  const filter = { user: req.user._id };
+
+  if (type) filter.type = type;
+  if (category) filter.category = category;
+  if (startDate || endDate) {
+    filter.date = {};
+    if (startDate) filter.date.$gte = new Date(startDate);
+    if (endDate)   filter.date.$lte = new Date(endDate);
+  }
+
+  const skip  = (Number(page) - 1) * Number(limit);
+  const total = await Transaction.countDocuments(filter);
+  const transactions = await Transaction.find(filter)
+    .sort({ date: -1 })
+    .skip(skip)
+    .limit(Number(limit));
+
+  res.json({ transactions, total, page: Number(page), pages: Math.ceil(total / limit) });
+};
+
+// GET /api/transactions/:id
+const getTransaction = async (req, res) => {
+  const tx = await Transaction.findOne({ _id: req.params.id, user: req.user._id });
+  if (!tx) return res.status(404).json({ message: 'Transaction not found.' });
+  res.json(tx);
+};
+
+// POST /api/transactions
+const createTransaction = async (req, res) => {
+  const { type, amount, category, description, date } = req.body;
+  if (!type || !amount || !category)
+    return res.status(400).json({ message: 'type, amount and category are required.' });
+
+  const tx = await Transaction.create({
+    user: req.user._id, type, amount, category,
+    description: description || '',
+    date: date ? new Date(date) : new Date(),
+  });
+  res.status(201).json(tx);
+};
+
+// PUT /api/transactions/:id
+const updateTransaction = async (req, res) => {
+  const tx = await Transaction.findOne({ _id: req.params.id, user: req.user._id });
+  if (!tx) return res.status(404).json({ message: 'Transaction not found.' });
+
+  const { type, amount, category, description, date } = req.body;
+  if (type)        tx.type        = type;
+  if (amount)      tx.amount      = amount;
+  if (category)    tx.category    = category;
+  if (description !== undefined) tx.description = description;
+  if (date)        tx.date        = new Date(date);
+
+  await tx.save();
+  res.json(tx);
+};
+
+// DELETE /api/transactions/:id
+const deleteTransaction = async (req, res) => {
+  const tx = await Transaction.findOneAndDelete({ _id: req.params.id, user: req.user._id });
+  if (!tx) return res.status(404).json({ message: 'Transaction not found.' });
+  res.json({ message: 'Transaction deleted.' });
+};
+
+// GET /api/transactions/summary  — totals by category
+const getSummary = async (req, res) => {
+  const { days = 30 } = req.query;
+  const since = new Date();
+  since.setDate(since.getDate() - Number(days));
+
+  const summary = await Transaction.aggregate([
+    { $match: { user: req.user._id, date: { $gte: since } } },
+    { $group: {
+      _id: { type: '$type', category: '$category' },
+      total: { $sum: '$amount' },
+      count: { $sum: 1 },
+    }},
+    { $sort: { total: -1 } },
+  ]);
+
+  const income  = summary.filter(s => s._id.type === 'income').reduce((a, c) => a + c.total, 0);
+  const expense = summary.filter(s => s._id.type === 'expense').reduce((a, c) => a + c.total, 0);
+
+  res.json({ income, expense, net: income - expense, breakdown: summary });
+};
+
+module.exports = { getTransactions, getTransaction, createTransaction, updateTransaction, deleteTransaction, getSummary };
