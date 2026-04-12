@@ -24,7 +24,11 @@ const ProtectedRoute = ({ children }) => {
 
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  if (loading) return null;
+  if (loading) return (
+    <div className="flex items-center justify-center h-screen bg-[#080c14]">
+      <div className="w-10 h-10 rounded-full border-4 border-indigo-900 border-t-indigo-400 animate-spin"></div>
+    </div>
+  );
   return user ? <Navigate to="/" replace /> : children;
 };
 

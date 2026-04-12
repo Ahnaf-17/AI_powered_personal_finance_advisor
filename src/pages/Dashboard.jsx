@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getTransactionSummary, getTransactions } from "../services/api";
+import { getTransactionSummary, getDailyTotals, getTransactions, getGoals } from "../services/api";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -40,15 +40,21 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [summary, setSummary] = useState(null);
   const [recent,  setRecent]  = useState([]);
+  const [daily,   setDaily]   = useState([]);
+  const [goals,   setGoals]   = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       getTransactionSummary({ days: 30 }),
       getTransactions({ limit: 5 }),
-    ]).then(([s, t]) => {
+      getDailyTotals({ days: 7 }),
+      getGoals(),
+    ]).then(([s, t, d, g]) => {
       setSummary(s.data);
       setRecent(t.data.transactions);
+      setDaily(d.data);
+      setGoals(g.data);
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
@@ -62,18 +68,20 @@ export default function Dashboard() {
   const pieData = (summary?.breakdown?.filter(b => b._id.type === "expense") || [])
     .map(e => ({ name: e._id.category, value: e.total }));
 
-  // Bar data — real 7-day daily totals from recent transactions
-  const last7 = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(); d.setDate(d.getDate() - (6 - i));
-    return { label: d.toLocaleDateString("en-AU", { weekday: "short" }), dateStr: d.toISOString().split("T")[0], amount: 0 };
-  });
-  // aggregate from summary breakdown if available, otherwise show 0
-  const barData = last7.map(day => ({ name: day.label, Expenses: day.amount }));
+  // Bar data — from /daily endpoint (always 7 filled buckets)
+  const barData = daily.map(d => ({ name: d.label, Expenses: d.total }));
 
   const net = summary?.net || 0;
   const savingsRate = user?.monthlyIncome
     ? (((user.monthlyIncome - (summary?.expense || 0)) / user.monthlyIncome) * 100).toFixed(1)
     : null;
+
+  // Goals derived stats
+  const activeGoals    = goals.filter(g => !g.isCompleted);
+  const completedGoals = goals.filter(g => g.isCompleted).length;
+  const totalSaved     = goals.reduce((a, g) => a + g.currentAmount, 0);
+  const totalTarget    = goals.reduce((a, g) => a + g.targetAmount, 0);
+  const overallGoalPct = totalTarget > 0 ? Math.round((totalSaved / totalTarget) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -95,10 +103,11 @@ export default function Dashboard() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard label="Total Income"   value={`$${(summary?.income||0).toLocaleString()}`} sub="Last 30 days" color="bg-emerald-500" icon="💹" glow="glow-emerald" />
-        <StatCard label="Total Expenses" value={`$${(summary?.expense||0).toLocaleString()}`} sub="Last 30 days" color="bg-rose-500"    icon="💸" glow="glow-rose" />
-        <StatCard label="Net Balance"    value={`${net>=0?"+":""}$${net.toLocaleString()}`} sub={savingsRate ? `Savings rate: ${savingsRate}%` : "Last 30 days"} color={net>=0?"bg-indigo-500":"bg-amber-500"} icon={net>=0?"🏦":"⚠️"} glow={net>=0?"glow-indigo":""} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Total Income"   value={`$${(summary?.income||0).toLocaleString()}`}                     sub="Last 30 days"                              color="bg-emerald-500" icon="💹" glow="glow-emerald" />
+        <StatCard label="Total Expenses" value={`$${(summary?.expense||0).toLocaleString()}`}                    sub="Last 30 days"                              color="bg-rose-500"    icon="💸" glow="glow-rose" />
+        <StatCard label="Net Balance"    value={`${net>=0?"+":""}$${Math.abs(net).toLocaleString()}`}            sub={savingsRate ? `Savings rate: ${savingsRate}%` : "Last 30 days"} color={net>=0?"bg-indigo-500":"bg-amber-500"} icon={net>=0?"🏦":"⚠️"} glow={net>=0?"glow-indigo":""} />
+        <StatCard label="Goals Progress" value={goals.length ? `${overallGoalPct}%` : "—"}                      sub={goals.length ? `${completedGoals}/${goals.length} complete · $${totalSaved.toLocaleString()} saved` : "No goals yet"} color="bg-violet-500" icon="🎯" glow="" />
       </div>
 
       {/* Charts */}
@@ -170,6 +179,68 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* Savings Goals */}
+      <div className="bg-[#0d1117] rounded-2xl border border-white/5 p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-sm font-bold text-slate-300">Savings Goals</h2>
+          <Link to="/insights" className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition-colors">
+            {goals.length > 0 ? "Manage goals →" : "Create a goal →"}
+          </Link>
+        </div>
+
+        {goals.length === 0 ? (
+          <div className="text-center py-10 text-slate-600">
+            <span className="text-4xl block mb-2">🎯</span>
+            <p className="text-sm">No goals yet. <Link to="/insights" className="text-indigo-400 hover:underline">Set one</Link></p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {goals.slice(0, 4).map((goal, idx) => {
+              const GRAD = [
+                { from:"#6366f1", to:"#8b5cf6" },
+                { from:"#10b981", to:"#06b6d4" },
+                { from:"#f59e0b", to:"#f97316" },
+                { from:"#ec4899", to:"#ef4444" },
+              ];
+              const g = GRAD[idx % GRAD.length];
+              const pct = Math.min((goal.currentAmount / goal.targetAmount) * 100, 100);
+              const remaining = Math.max(goal.targetAmount - goal.currentAmount, 0);
+              return (
+                <div key={goal._id} className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
+                        style={{ background: `${g.from}20` }}>🎯</div>
+                      <p className="text-sm font-semibold text-slate-200 truncate">{goal.name}</p>
+                    </div>
+                    {goal.isCompleted
+                      ? <span className="text-xs px-2 py-0.5 rounded-full font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 flex-shrink-0">Done</span>
+                      : <span className="text-xs text-slate-500 flex-shrink-0">{pct.toFixed(0)}%</span>
+                    }
+                  </div>
+                  <div className="w-full bg-white/5 rounded-full h-1.5 mb-2">
+                    <div className="h-1.5 rounded-full transition-all duration-700"
+                      style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${g.from}, ${g.to})` }} />
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-500">${goal.currentAmount.toLocaleString()} saved</span>
+                    {remaining > 0
+                      ? <span className="text-slate-600">${remaining.toLocaleString()} to go</span>
+                      : <span className="text-emerald-500">✓ Complete</span>
+                    }
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {goals.length > 4 && (
+          <p className="text-xs text-slate-600 text-center mt-3">
+            +{goals.length - 4} more goals · <Link to="/insights" className="text-indigo-400 hover:underline">View all</Link>
+          </p>
         )}
       </div>
     </div>

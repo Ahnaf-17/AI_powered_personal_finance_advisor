@@ -91,7 +91,7 @@ function getRulesBasedAdvice(monthlyIncome) {
     '**50/30/20 Budget Rule:**\n' +
     `1. **Needs (50%):** Allocate up to $${needs}/month for essential expenses ` +
     '(rent, groceries, utilities, transport).\n' +
-    `2. **Wants (30%):** Keep discretionary spending (dining, entertainment, ' +
+    `2. **Wants (30%):** Keep discretionary spending (dining, entertainment, ` +
     `subscriptions) under $${wants}/month.\n` +
     `3. **Savings (20%):** Aim to save at least $${savings}/month.\n\n` +
     'Track your transactions and return for personalised AI recommendations.'

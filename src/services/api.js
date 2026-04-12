@@ -11,14 +11,15 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Auto-logout on 401
+// Auto-logout on 401 — emit an event so AuthContext can handle it via React Router (no page reload)
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    const isAuthRoute = err.config?.url?.startsWith('/auth');
+    if (err.response?.status === 401 && !isAuthRoute) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      window.dispatchEvent(new Event('auth:logout'));
     }
     return Promise.reject(err);
   }
@@ -30,12 +31,13 @@ export const loginUser     = (data) => api.post('/auth/login', data);
 export const getMe         = ()     => api.get('/auth/me');
 
 // Transactions
-export const getTransactions    = (params) => api.get('/transactions', { params });
-export const getTransaction     = (id)     => api.get(`/transactions/${id}`);
-export const createTransaction  = (data)   => api.post('/transactions', data);
-export const updateTransaction  = (id, data) => api.put(`/transactions/${id}`, data);
-export const deleteTransaction  = (id)     => api.delete(`/transactions/${id}`);
-export const getTransactionSummary = (params) => api.get('/transactions/summary', { params });
+export const getTransactions        = (params) => api.get('/transactions', { params });
+export const getTransaction         = (id)     => api.get(`/transactions/${id}`);
+export const createTransaction      = (data)   => api.post('/transactions', data);
+export const updateTransaction      = (id, data) => api.put(`/transactions/${id}`, data);
+export const deleteTransaction      = (id)     => api.delete(`/transactions/${id}`);
+export const getTransactionSummary  = (params) => api.get('/transactions/summary', { params });
+export const getDailyTotals         = (params) => api.get('/transactions/daily', { params });
 
 // Goals
 export const getGoals    = ()          => api.get('/goals');
@@ -48,8 +50,9 @@ export const getProfile     = ()       => api.get('/users/profile');
 export const updateProfile  = (data)   => api.patch('/users/profile', data);
 
 // AI
-export const getBudgetAdvice      = ()       => api.post('/ai/budget-advice');
-export const getSavingsSuggestions = ()      => api.post('/ai/savings-suggestions');
-export const sendChatMessage      = (data)   => api.post('/ai/chat', data);
+export const getBudgetAdvice       = ()             => api.post('/ai/budget-advice');
+export const getSavingsSuggestions = ()             => api.post('/ai/savings-suggestions');
+export const getAIInsights         = ()             => api.post('/ai/budget-advice');
+export const sendChatMessage       = (message, history) => api.post('/ai/chat', { message, history });
 
 export default api;

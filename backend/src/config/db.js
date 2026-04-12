@@ -1,19 +1,24 @@
 const mongoose = require('mongoose');
 
 const connectDB = async () => {
+  const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/finance_advisor';
+
+  // Try real MongoDB first (persistent)
   try {
-    let uri = process.env.MONGODB_URI;
+    await mongoose.connect(uri, { serverSelectionTimeoutMS: 3000 });
+    console.log(`✅ MongoDB connected (persistent): ${mongoose.connection.host}`);
+    return;
+  } catch (_) {
+    console.log('⚠️  Real MongoDB unavailable, falling back to in-memory (data will not persist)');
+  }
 
-    if (!uri || uri === 'mongodb://localhost:27017/finance_advisor') {
-      // No real MongoDB — spin up an in-memory instance for local dev
-      const { MongoMemoryServer } = require('mongodb-memory-server');
-      const mongoms = await MongoMemoryServer.create();
-      uri = mongoms.getUri();
-      console.log('⚡ Using in-memory MongoDB (dev mode)');
-    }
-
-    const conn = await mongoose.connect(uri);
-    console.log(`✅ MongoDB connected: ${conn.connection.host}`);
+  // Fallback to in-memory
+  try {
+    const { MongoMemoryServer } = require('mongodb-memory-server');
+    const mongoms = await MongoMemoryServer.create();
+    const memUri = mongoms.getUri();
+    await mongoose.connect(memUri);
+    console.log('⚡ Using in-memory MongoDB (dev mode)');
   } catch (error) {
     console.error(`MongoDB connection error: ${error.message}`);
     process.exit(1);

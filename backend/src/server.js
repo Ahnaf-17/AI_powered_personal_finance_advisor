@@ -18,7 +18,17 @@ connectDB();
 
 // Middleware
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }));
+app.use(cors({
+  origin: (origin, cb) => {
+    // Allow requests with no origin (e.g. curl/Postman) or any localhost port
+    if (!origin || origin.startsWith('http://localhost:') || origin === process.env.CLIENT_URL) {
+      cb(null, true);
+    } else {
+      cb(null, false);
+    }
+  },
+  credentials: true,
+}));
 app.use(morgan('dev'));
 app.use(express.json());
 

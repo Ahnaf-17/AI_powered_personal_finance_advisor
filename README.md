@@ -1,12 +1,12 @@
 ﻿# AI-Powered Personal Finance Advisor
 
-![React](https://img.shields.io/badge/React-18-61DAFB?logo=react) ![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=node.js) ![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?logo=mongodb) ![License](https://img.shields.io/badge/license-MIT-blue)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white) ![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-8-47A248?logo=mongodb&logoColor=white) ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white) ![TailwindCSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)
 
-A full-stack web application that helps you take control of your personal finances. Track income and expenses, set savings goals, visualise spending with charts, and get AI-powered budget advice — all in one place.
+A full-stack web application that helps you take control of your personal finances. Track income and expenses, set savings goals, visualise spending with interactive charts, and get AI-powered budget advice — all wrapped in a dark futuristic UI.
 
 ---
 
-## Built By
+## Team
 
 | Developer | GitHub | Role |
 |-----------|--------|------|
@@ -18,26 +18,152 @@ A full-stack web application that helps you take control of your personal financ
 
 ## Features
 
-- **Budget Advice** – AI-generated personalised budget recommendations based on 90-day spending history
-- **Savings Suggestions** – Identifies top discretionary categories and suggests savings targets
-- **Financial Chatbot** – Scoped AI assistant for personal finance questions with session history
-- **Transaction Management** – Add, view, filter, and categorise income and expenses
-- **Goal Tracker** – Set and track financial savings goals
-- **Dashboard** – Visual spending breakdown with charts (Recharts)
-- **Authentication** – Secure JWT-based login and registration
+| Feature | Description |
+|---------|-------------|
+| 📊 **Dashboard** | Real-time income/expense summary, 7-day spending bar chart, category pie chart, savings goals progress |
+| 💳 **Transactions** | Add, view, filter and delete income and expense records by category |
+| 🎯 **Savings Goals** | Create goals with target amounts and dates, track progress with animated bars |
+| 🤖 **AI Advisor** | Personalised budget tips generated from your spending data |
+| 💬 **AI Chatbot** | Conversational assistant for financial questions with suggestion chips |
+| 🔒 **Auth** | JWT-based register/login with protected routes |
+| 🌙 **Dark UI** | Glassmorphism dark theme (`#080c14` base, indigo/violet accents) |
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 18 + Vite, Tailwind CSS, Recharts |
-| Backend | Node.js, Express.js |
-| Database | MongoDB + Mongoose |
-| AI Provider | OpenAI GPT-3.5-turbo (Groq Llama3 fallback) |
-| Auth | JWT (jsonwebtoken), bcrypt |
-| Security | express-rate-limit, express-validator, helmet |
+### Frontend
+- **React 19** + **Vite 8**
+- **Tailwind CSS v4**
+- **Recharts** — PieChart, BarChart
+- **React Router DOM v7**
+- **Axios**
+
+### Backend
+- **Node.js 22** + **Express 4**
+- **MongoDB** (persistent local) + **Mongoose 8**
+- **JWT** authentication
+- **bcryptjs** password hashing
+- **Helmet** + **CORS** security
+- **OpenAI API** (optional — falls back gracefully)
+
+---
+
+## Prerequisites
+
+Make sure you have the following installed:
+
+| Tool | Version | Download |
+|------|---------|----------|
+| Node.js | 18 or higher | https://nodejs.org |
+| Git | Any | https://git-scm.com |
+| MongoDB | 6+ (optional — see below) | https://www.mongodb.com/try/download/community |
+
+> **No MongoDB installed?** No problem. The app automatically falls back to an **in-memory MongoDB** instance for development. Data will not persist across server restarts in that mode.
+
+---
+
+## Installation & Setup
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/Ahnaf-17/AI_powered_personal_finance_advisor.git
+cd AI_powered_personal_finance_advisor
+```
+
+### 2. Install frontend dependencies
+
+```bash
+npm install
+```
+
+### 3. Install backend dependencies
+
+```bash
+cd backend
+npm install
+cd ..
+```
+
+### 4. Configure environment variables
+
+The backend `.env` file is at `backend/.env`. Edit it with your values:
+
+```env
+NODE_ENV=development
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/finance_advisor
+JWT_SECRET=replace_with_a_long_random_secret
+JWT_EXPIRES_IN=7d
+
+# Optional — AI features (leave blank to disable AI endpoints)
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=gpt-3.5-turbo
+
+CLIENT_URL=http://localhost:5173
+FRONTEND_URL=http://localhost:5173
+```
+
+> **AI features are optional.** If `OPENAI_API_KEY` is not set, the AI Advisor and Chatbot pages will show a graceful error message.
+
+---
+
+## Running the Project
+
+Open **two terminals** from the project root.
+
+### Terminal 1 — Backend
+
+```bash
+cd backend
+npm run dev
+```
+
+Expected output:
+```
+Server running on port 5000
+✅ MongoDB connected (persistent): localhost
+```
+
+> If MongoDB is not installed locally, you will see `⚡ Using in-memory MongoDB (dev mode)` instead — this is fine for testing.
+
+### Terminal 2 — Frontend
+
+```bash
+npm run dev
+```
+
+Expected output:
+```
+VITE v8.x.x  ready in xxx ms
+➜  Local:   http://localhost:5173/
+```
+
+Open **http://localhost:5173** in your browser.
+
+---
+
+## Demo Account (Pre-seeded Data)
+
+To instantly populate the database with realistic transactions and goals, run:
+
+```bash
+node backend/scripts/seed.js
+```
+
+Then log in with:
+
+| Field | Value |
+|-------|-------|
+| Email | `demo@finance.app` |
+| Password | `Demo1234!` |
+
+To use a custom account:
+
+```bash
+node backend/scripts/seed.js --email you@example.com --password MyPass123! --name "Your Name"
+```
 
 ---
 
@@ -45,89 +171,96 @@ A full-stack web application that helps you take control of your personal financ
 
 ```
 AI_powered_personal_finance_advisor/
-├── src/                          # React frontend (Vite)
-│   ├── components/               # Reusable UI components
-│   │   ├── Chart.jsx
-│   │   ├── ExpenseForm.jsx
+├── src/                          # React frontend
+│   ├── components/
 │   │   └── Navbar.jsx
-│   ├── pages/                    # Route-level pages
-│   │   ├── Dashboard.jsx
-│   │   ├── AddExpense.jsx
-│   │   ├── Insights.jsx
-│   │   └── Chatbot.jsx
+│   ├── context/
+│   │   └── AuthContext.jsx
+│   ├── pages/
+│   │   ├── Dashboard.jsx         # Charts, summary, goals preview
+│   │   ├── AddExpense.jsx        # Transaction list & add form
+│   │   ├── Insights.jsx          # Savings goals management
+│   │   ├── AIAdvisor.jsx         # AI budget insights
+│   │   └── Chatbot.jsx           # AI chat interface
 │   ├── services/
-│   │   └── api.js                # Axios API service layer
-│   ├── data/
-│   │   └── dummyData.js          # Sample data for development
-│   └── App.jsx
-├── backend/                      # Node.js + Express API
+│   │   └── api.js                # Axios instance & API calls
+│   └── App.jsx                   # Routes & layout
+│
+├── backend/
 │   ├── src/
 │   │   ├── config/
-│   │   │   └── db.js             # MongoDB connection
-│   │   ├── models/
-│   │   │   ├── User.js
-│   │   │   ├── Transaction.js
-│   │   │   └── Goal.js
+│   │   │   └── db.js             # MongoDB connection (persistent + fallback)
+│   │   ├── controllers/          # Route handlers
 │   │   ├── middleware/
 │   │   │   └── auth.js           # JWT verification
-│   │   ├── controllers/
-│   │   │   └── aiController.js   # AI feature handlers
-│   │   └── routes/
-│   │       └── ai.js             # AI routes with rate limiting
-│   ├── package.json
-│   └── .env.example
-├── docs/                         # Project documentation
-│   ├── ai-workflow-design.md
-│   ├── ai-feature-requirements.md
-│   ├── test-plan-draft.md
-│   └── risk-register-updated.md
-└── README.md
+│   │   ├── models/               # Mongoose schemas
+│   │   ├── routes/               # Express routers
+│   │   └── server.js             # Express app entry point
+│   ├── scripts/
+│   │   └── seed.js               # Demo data seeder
+│   └── .env                      # Environment variables
+│
+├── data/db/                      # Local MongoDB data files (git-ignored)
+└── vite.config.js
 ```
 
 ---
 
-## Getting Started
+## API Endpoints
 
-### Prerequisites
-- Node.js v18+
-- OpenAI API key **or** [Groq API key](https://console.groq.com) (free)
-- MongoDB — **not required locally** (uses in-memory DB automatically in dev mode)
+All endpoints are prefixed with `/api`.
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/Ahnaf-17/AI_powered_personal_finance_advisor.git
-cd AI_powered_personal_finance_advisor
+### Auth
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/auth/register` | Register new user |
+| POST | `/auth/login` | Login, returns JWT |
+| GET | `/auth/me` | Get current user (auth required) |
+
+### Transactions
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/transactions` | List transactions (filterable) |
+| POST | `/transactions` | Create transaction |
+| PUT | `/transactions/:id` | Update transaction |
+| DELETE | `/transactions/:id` | Delete transaction |
+| GET | `/transactions/summary` | Income/expense totals by category |
+| GET | `/transactions/daily` | Daily expense totals (last N days) |
+
+### Goals
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/goals` | List all goals |
+| POST | `/goals` | Create goal |
+| PUT | `/goals/:id` | Update goal (add funds etc.) |
+| DELETE | `/goals/:id` | Delete goal |
+
+### AI
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/ai/budget-advice` | Get AI budget insights |
+| POST | `/ai/chat` | Send message to AI chatbot |
+
+---
+
+## Troubleshooting
+
+**Port already in use (EADDRINUSE)**
+```powershell
+# Windows — kill process on port 5000
+$p = (Get-NetTCPConnection -LocalPort 5000 -EA SilentlyContinue | Select -First 1).OwningProcess
+if ($p) { Stop-Process -Id $p -Force }
 ```
 
-### 2. Start the frontend
-```bash
-npm install
-npm run dev
-```
-Frontend runs at `http://localhost:5173`
+**Login page keeps refreshing**  
+This was caused by a 401 interceptor calling `window.location.href`. Fixed in the current codebase using React Router navigation instead.
 
-### 3. Start the backend
-```bash
-cd backend
-npm install
-cp .env.example .env
-npm run dev
-```
-Backend runs at `http://localhost:5000`
+**Data not saving between restarts**  
+Ensure MongoDB is running locally on port 27017. If you see `⚡ Using in-memory MongoDB`, data is not persisted. Install MongoDB Community or use MongoDB Atlas with a connection string in `.env`.
 
-> **No MongoDB needed locally** — the backend automatically starts an in-memory MongoDB instance for development. Data resets on restart. For persistent storage, set `MONGODB_URI` to a [MongoDB Atlas](https://cloud.mongodb.com) connection string.
+**AI features not working**  
+Add a valid `OPENAI_API_KEY` to `backend/.env`. Alternatively, use the free Groq API by uncommenting the Groq lines at the bottom of `.env`.
 
-### 4. Environment variables (`backend/.env`)
-```env
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/finance_advisor
-JWT_SECRET=your_long_random_secret_here
-OPENAI_API_KEY=your_api_key_here
-OPENAI_MODEL=gpt-3.5-turbo
-
-# Optional: use Groq free tier instead of OpenAI
-# AI_BASE_URL=https://api.groq.com/openai/v1
-# OPENAI_MODEL=llama3-8b-8192
 ```
 
 ### 5. Register and log in

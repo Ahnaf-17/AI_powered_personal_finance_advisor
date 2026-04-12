@@ -89,4 +89,33 @@ const getSummary = async (req, res) => {
   res.json({ income, expense, net: income - expense, breakdown: summary });
 };
 
-module.exports = { getTransactions, getTransaction, createTransaction, updateTransaction, deleteTransaction, getSummary };
+// GET /api/transactions/daily?days=7  — daily expense totals for bar chart
+const getDaily = async (req, res) => {
+  const { days = 7 } = req.query;
+  const n = Math.min(Number(days), 90);
+  const since = new Date();
+  since.setDate(since.getDate() - (n - 1));
+  since.setHours(0, 0, 0, 0);
+
+  const rows = await Transaction.aggregate([
+    { $match: { user: req.user._id, type: 'expense', date: { $gte: since } } },
+    { $group: {
+      _id: { $dateToString: { format: '%Y-%m-%d', date: '$date' } },
+      total: { $sum: '$amount' },
+    }},
+  ]);
+
+  // Build a full array with 0-filled gaps
+  const map = Object.fromEntries(rows.map(r => [r._id, r.total]));
+  const result = Array.from({ length: n }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (n - 1 - i));
+    const key = d.toISOString().split('T')[0];
+    const label = d.toLocaleDateString('en-AU', { weekday: 'short' });
+    return { date: key, label, total: map[key] || 0 };
+  });
+
+  res.json(result);
+};
+
+module.exports = { getTransactions, getTransaction, createTransaction, updateTransaction, deleteTransaction, getSummary, getDaily };
