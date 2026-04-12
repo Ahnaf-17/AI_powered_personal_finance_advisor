@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment files
+.env
+backend/.env
+
+# Word/PDF documents (assignment specs and reports - keep locally, not in repo)
+*.docx
+*.pdf
+
+# OS files
+Thumbs.db
