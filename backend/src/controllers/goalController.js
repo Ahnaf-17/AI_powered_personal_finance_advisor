@@ -3,14 +3,23 @@ const Goal = require('../models/Goal');
 // GET /api/goals
 const getGoals = async (req, res) => {
   const goals = await Goal.find({ user: req.user._id }).sort({ createdAt: -1 });
-  res.json(goals);
+  const goalsWithProgress = goals.map(g => ({
+    ...g.toObject(),
+    progressPercent: g.targetAmount > 0
+      ? Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100))
+      : 0,
+  }));
+  res.json(goalsWithProgress);
 };
 
 // GET /api/goals/:id
 const getGoal = async (req, res) => {
   const goal = await Goal.findOne({ _id: req.params.id, user: req.user._id });
   if (!goal) return res.status(404).json({ message: 'Goal not found.' });
-  res.json(goal);
+  const progressPercent = goal.targetAmount > 0
+    ? Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100))
+    : 0;
+  res.json({ ...goal.toObject(), progressPercent });
 };
 
 // POST /api/goals
@@ -19,8 +28,18 @@ const createGoal = async (req, res) => {
   if (!name || !targetAmount)
     return res.status(400).json({ message: 'name and targetAmount are required.' });
 
+  if (typeof name === 'string' && name.trim().length < 2)
+    return res.status(400).json({ message: 'name must be at least 2 characters.' });
+
+  const parsedTarget = Number(targetAmount);
+  if (isNaN(parsedTarget) || parsedTarget <= 0)
+    return res.status(400).json({ message: 'targetAmount must be a positive number.' });
+
+  if (targetDate && new Date(targetDate) <= new Date())
+    return res.status(400).json({ message: 'targetDate must be a future date.' });
+
   const goal = await Goal.create({
-    user: req.user._id, name, targetAmount,
+    user: req.user._id, name: name.trim(), targetAmount: parsedTarget,
     currentAmount: currentAmount || 0,
     targetDate: targetDate ? new Date(targetDate) : undefined,
   });
