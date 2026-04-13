@@ -4,6 +4,7 @@
  *
  * Author: Md Monsur Hossain (AI & Quality Lead)
  * COIT20273 – AI-Powered Personal Finance Advisor
+ *
  */
 
 const OpenAI = require('openai');
