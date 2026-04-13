@@ -10,7 +10,7 @@ A full-stack web application that helps you take control of your personal financ
 | Developer | GitHub | Role |
 |-----------|--------|------|
 | Ahnaf Ahmed | [@Ahnaf-17](https://github.com/Ahnaf-17) | Team Lead / Frontend |
-| Shakir Uddin Ahmed | — | Backend / Database |
+| Shakir Uddin Ahmed |  [@12283362](https://github.com/12283362)  | Backend / Database |
 | Md Monsur Hossain | [@mdmhossainn](https://github.com/mdmhossainn) | AI Integration / QA |
 
 ---
