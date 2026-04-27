@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getAIInsights, getTransactions, getGoals } from "../services/api";
+import { getAIInsights, getTransactions, getGoals, getMarketPulse } from "../services/api";
 
 const TIP_ICONS = { savings:"💰", budget:"📊", debt:"💳", investment:"📈", emergency:"🛡️" };
 
@@ -58,18 +58,35 @@ function InsightCard({ insight, idx }) {
   );
 }
 
-export default function AIAdvisor() {
-  const [insights,  setInsights]  = useState([]);
+function MarketCard({ item, display, sub }) {
+  const up = item.trend === 'up';
+  return (
+    <div className={`rounded-xl border p-3 ${up ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-rose-500/10 border-rose-500/20'}`}>
+      <p className="text-xs text-slate-500 mb-0.5 font-medium">{item.symbol}</p>
+      {sub && <p className="text-[10px] text-slate-600 mb-1">{sub}</p>}
+      <p className="text-base font-bold text-white leading-tight">{display}</p>
+      <p className={`text-xs font-semibold mt-1 ${up ? 'text-emerald-400' : 'text-rose-400'}`}>
+        {up ? '▲' : '▼'} {Math.abs(item.changePct)}%
+      </p>
+    </div>
+  );
+}
+
+export default function AIAdvisor() {  const [insights,  setInsights]  = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState("");
   const [txTotal,   setTxTotal]   = useState({ income:0, expense:0, txCount:0 });
   const [goalStats, setGoalStats] = useState({ count:0, pct:0 });
+  const [market,       setMarket]       = useState(null);
+  const [marketLoading, setMarketLoading] = useState(true);
+  const [marketError,   setMarketError]   = useState(false);
+  const [marketTab,     setMarketTab]     = useState('Stocks');
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [insRes, txRes, gRes] = await Promise.allSettled([
-          getAIInsights(), getTransactions(), getGoals()
+      const [insRes, txRes, gRes, mktRes] = await Promise.allSettled([
+          getAIInsights(), getTransactions(), getGoals(), getMarketPulse()
         ]);
         if (insRes.status === "fulfilled") {
           const d = insRes.value.data;
@@ -86,18 +103,25 @@ export default function AIAdvisor() {
           setError("Unable to fetch AI insights right now.");
         }
         if (txRes.status === "fulfilled") {
-          const txs = txRes.value.data;
+          const raw = txRes.value.data;
+          const txs = Array.isArray(raw) ? raw : (raw?.transactions ?? []);
           const income  = txs.filter(t=>t.type==="income").reduce((a,t)=>a+t.amount,0);
           const expense = txs.filter(t=>t.type==="expense").reduce((a,t)=>a+t.amount,0);
           setTxTotal({ income, expense, txCount: txs.length });
         }
         if (gRes.status === "fulfilled") {
           const gs = gRes.value.data;
-          const done = gs.filter(g=>g.isCompleted).length;
-          const avgPct = gs.length ? gs.reduce((a,g)=>a+Math.min((g.currentAmount/g.targetAmount)*100,100),0)/gs.length : 0;
-          setGoalStats({ count: gs.length, pct: Math.round(avgPct), done });
+          const arr = Array.isArray(gs) ? gs : [];
+          const done = arr.filter(g=>g.isCompleted).length;
+          const avgPct = arr.length ? arr.reduce((a,g)=>a+Math.min((g.currentAmount/g.targetAmount)*100,100),0)/arr.length : 0;
+          setGoalStats({ count: arr.length, pct: Math.round(avgPct), done });
         }
-      } finally { setLoading(false); }
+        if (mktRes.status === "fulfilled") {
+          setMarket(mktRes.value.data);
+        } else {
+          setMarketError(true);
+        }
+      } finally { setLoading(false); setMarketLoading(false); }
     };
     load();
   }, []);
@@ -111,7 +135,7 @@ export default function AIAdvisor() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">AI Financial Advisor</h1>
+        <h1 className="text-2xl font-bold text-white tracking-tight">WealthWise</h1>
         <p className="text-slate-500 text-sm mt-1">Personalised insights powered by your financial data.</p>
       </div>
 
@@ -127,6 +151,72 @@ export default function AIAdvisor() {
             <p className="text-xs text-slate-700 mt-0.5">{m.sub}</p>
           </div>
         ))}
+      </div>
+
+      {/* market pulse */}
+      <div className="bg-[#0d1117] rounded-2xl border border-white/5 p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-7 h-7 rounded-xl bg-cyan-500/20 flex items-center justify-center text-sm">📡</div>
+          <h2 className="text-sm font-bold text-slate-300">Market Pulse</h2>
+          {!marketLoading && market && (
+            <span className="ml-auto text-xs text-slate-600">
+              Simulated · {new Date(market.fetchedAt).toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit' })}
+            </span>
+          )}
+        </div>
+
+        {marketLoading && (
+          <div className="flex items-center gap-2 py-3">
+            <div className="w-4 h-4 rounded-full border-2 border-cyan-900 border-t-cyan-400 animate-spin"></div>
+            <p className="text-xs text-slate-600">Fetching market data...</p>
+          </div>
+        )}
+
+        {!marketLoading && marketError && (
+          <p className="text-xs text-slate-600 py-2">Market data unavailable right now.</p>
+        )}
+
+        {!marketLoading && !marketError && market && (
+          <>
+            {/* Tab bar */}
+            <div className="flex gap-1 mb-3 bg-white/[0.03] rounded-xl p-1">
+              {['Stocks','Crypto','Forex','Commodities'].map(tab => (
+                <button key={tab} onClick={() => setMarketTab(tab)}
+                  className={`flex-1 text-xs py-1.5 rounded-lg font-medium transition-colors ${
+                    marketTab === tab
+                      ? 'bg-cyan-500/20 text-cyan-400'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}>
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            {/* Items grid */}
+            <div className="grid grid-cols-2 gap-2">
+              {marketTab === 'Stocks' && market.stocks?.map(item => (
+                <MarketCard key={item.symbol} item={item}
+                  display={item.symbol === 'ASX 200'
+                    ? (+item.price).toLocaleString('en-AU', {maximumFractionDigits:0})
+                    : `A$${(+item.price).toLocaleString('en-AU', {minimumFractionDigits:2,maximumFractionDigits:2})}`} />
+              ))}
+              {marketTab === 'Crypto' && market.crypto?.map(item => (
+                <MarketCard key={item.symbol} item={item} sub={item.name}
+                  display={`A$${(+item.price).toLocaleString('en-AU', {minimumFractionDigits:2,maximumFractionDigits:2})}`} />
+              ))}
+              {marketTab === 'Forex' && market.forex?.map(item => (
+                <MarketCard key={item.symbol} item={item}
+                  display={(+item.price).toFixed(4)} />
+              ))}
+              {marketTab === 'Commodities' && market.commodities?.map(item => (
+                <MarketCard key={item.symbol} item={item}
+                  display={`A$${(+item.price).toFixed(2)}${item.unit}`} />
+              ))}
+            </div>
+          </>
+        )}
+
+        <p className="text-xs text-slate-700 mt-3">Simulated market data enriches your AI advice with broader financial context.</p>
       </div>
 
       {/* insights feed */}
@@ -167,13 +257,6 @@ export default function AIAdvisor() {
         )}
       </div>
 
-      {/* disclaimer */}
-      <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex gap-3">
-        <span className="text-lg flex-shrink-0">⚠️</span>
-        <p className="text-xs text-amber-400/90 leading-relaxed">
-          <strong className="font-semibold">Disclaimer:</strong> AI-generated insights are for educational purposes only and do not constitute professional financial advice. Please consult a licensed financial adviser for personalised guidance.
-        </p>
-      </div>
     </div>
   );
 }

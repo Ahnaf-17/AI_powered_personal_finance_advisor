@@ -40,7 +40,7 @@ export default function Login() {
 
         <div className="relative flex items-center gap-3 font-bold text-2xl">
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">💰</div>
-          <span className="bg-gradient-to-r from-indigo-300 to-violet-300 bg-clip-text text-transparent">FinanceAdvisor</span>
+          <span className="bg-gradient-to-r from-indigo-300 to-violet-300 bg-clip-text text-transparent">WealthWise</span>
         </div>
 
         <div className="relative space-y-6">
@@ -62,14 +62,14 @@ export default function Login() {
             ))}
           </div>
         </div>
-        <p className="relative text-slate-600 text-sm">© 2026 FinanceAdvisor</p>
+        <p className="relative text-slate-600 text-sm">© 2026 WealthWise</p>
       </div>
 
       {/* Right form panel */}
       <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-12 bg-[#0d1117]">
         <div className="w-full max-w-sm space-y-8">
           <div className="lg:hidden flex items-center gap-2 font-bold text-indigo-300 text-xl">
-            <span>💰</span> FinanceAdvisor
+            <span>💰</span> WealthWise
           </div>
 
           <div>

@@ -44,7 +44,7 @@ function ChatBubble({ msg }) {
 
 export default function Chatbot() {
   const [messages,    setMessages]    = useState([
-    { role:"assistant", content:"Hi! I'm your AI financial advisor. Ask me anything about budgeting, saving, investing, or managing debt. How can I help you today?" }
+    { role:"assistant", content:"Hi! I'm WealthWise AI. Ask me anything about budgeting, saving, investing, or managing debt. How can I help you today?" }
   ]);
   const [input,       setInput]       = useState("");
   const [loading,     setLoading]     = useState(false);
@@ -71,7 +71,7 @@ export default function Chatbot() {
   const handleKey = (e) => { if (e.key==="Enter" && !e.shiftKey) { e.preventDefault(); send(); } };
 
   const clearChat = () => {
-    setMessages([{ role:"assistant", content:"Hi! I'm your AI financial advisor. Ask me anything about budgeting, saving, investing, or managing debt. How can I help you today?" }]);
+    setMessages([{ role:"assistant", content:"Hi! I'm WealthWise AI. Ask me anything about budgeting, saving, investing, or managing debt. How can I help you today?" }]);
     setShowSugg(true);
   };
 
