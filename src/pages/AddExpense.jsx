@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getTransactions, createTransaction, deleteTransaction } from "../services/api";
+import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from "../services/api";
 
 const CATEGORIES = ["Food","Transport","Shopping","Entertainment","Health","Utilities","Rent","Salary","Freelance","Investment","Other"];
 const CAT_ICONS  = { Food:"🍔",Transport:"🚗",Shopping:"🛍️",Entertainment:"🎬",Health:"💊",Utilities:"💡",Rent:"🏠",Salary:"💼",Freelance:"💻",Investment:"📈",Other:"📦" };
@@ -11,6 +11,7 @@ export default function AddExpense() {
   const [loading,      setLoading]      = useState(true);
   const [submitting,   setSubmitting]   = useState(false);
   const [filter,       setFilter]       = useState("all");
+  const [editId,       setEditId]       = useState(null);   // null = add mode, string = edit mode
   const [form, setForm] = useState({ type:"expense", amount:"", category:"Food", description:"", date: new Date().toISOString().split("T")[0] });
   const [error, setError] = useState("");
 
@@ -27,11 +28,34 @@ export default function AddExpense() {
     if (!form.amount || Number(form.amount) <= 0) { setError("Please enter a valid amount."); return; }
     setSubmitting(true);
     try {
-      await createTransaction({ ...form, amount: Number(form.amount) });
+      if (editId) {
+        await updateTransaction(editId, { ...form, amount: Number(form.amount) });
+        setEditId(null);
+      } else {
+        await createTransaction({ ...form, amount: Number(form.amount) });
+      }
       setForm({ type:"expense", amount:"", category:"Food", description:"", date: new Date().toISOString().split("T")[0] });
       fetchTx();
     } catch (err) { setError(err.response?.data?.message || "Failed to save transaction."); }
     finally { setSubmitting(false); }
+  };
+
+  const handleEdit = (tx) => {
+    setEditId(tx._id);
+    setForm({
+      type:        tx.type,
+      amount:      tx.amount,
+      category:    tx.category,
+      description: tx.description || "",
+      date:        new Date(tx.date).toISOString().split("T")[0],
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleCancelEdit = () => {
+    setEditId(null);
+    setError("");
+    setForm({ type:"expense", amount:"", category:"Food", description:"", date: new Date().toISOString().split("T")[0] });
   };
 
   const handleDelete = async (id) => {
@@ -52,10 +76,19 @@ export default function AddExpense() {
       {/* Add form */}
       <div className="bg-[#0d1117] rounded-2xl border border-white/5 p-6">
         <div className="flex items-center gap-2 mb-5">
-          <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center">
-            <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+          <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${editId ? "bg-amber-500/20" : "bg-indigo-500/20"}`}>
+            {editId
+              ? <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+              : <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+            }
           </div>
-          <h2 className="text-sm font-bold text-slate-300">Add Transaction</h2>
+          <h2 className="text-sm font-bold text-slate-300">{editId ? "Edit Transaction" : "Add Transaction"}</h2>
+          {editId && (
+            <button type="button" onClick={handleCancelEdit}
+              className="ml-auto text-xs text-slate-500 hover:text-slate-300 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-all">
+              Cancel Edit
+            </button>
+          )}
         </div>
 
         {error && (
@@ -110,7 +143,7 @@ export default function AddExpense() {
           <div className="flex items-end">
             <button type="submit" disabled={submitting}
               className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold py-2.5 rounded-xl text-sm transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 active:scale-[0.98]">
-              {submitting ? "Saving..." : "+ Add Transaction"}
+              {submitting ? "Saving..." : editId ? "Update Transaction" : "+ Add Transaction"}
             </button>
           </div>
         </form>
@@ -171,8 +204,10 @@ export default function AddExpense() {
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <span className={`text-sm font-bold ${tx.type==="income" ? "text-emerald-400" : "text-rose-400"}`}>
                     {tx.type==="income" ? "+" : "−"}${tx.amount.toLocaleString()}
-                  </span>
-                  <button onClick={() => handleDelete(tx._id)}
+                  </span>                  <button onClick={() => handleEdit(tx)}
+                    className="opacity-0 group-hover:opacity-100 w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 hover:bg-amber-500/10 hover:text-amber-400 transition-all">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                  </button>                  <button onClick={() => handleDelete(tx._id)}
                     className="opacity-0 group-hover:opacity-100 w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 hover:bg-red-500/10 hover:text-red-400 transition-all">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   </button>
