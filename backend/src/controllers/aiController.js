@@ -4,21 +4,27 @@
  *
  * Author: Md Monsur Hossain (AI & Quality Lead)
  * COIT20273 – AI-Powered Personal Finance Advisor
- *
  */
 
 const OpenAI = require('openai');
 const Transaction = require('../models/Transaction');
+const Goal = require('../models/Goal');
+const { getMarketContextForAI } = require('./marketController');
 
-// Initialise AI client – configurable via environment variables
-// Supports OpenAI (primary) and Groq (free dev fallback) via base_url swap
-const aiClient = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  baseURL: process.env.AI_BASE_URL || 'https://api.openai.com/v1',
-});
+// Lazy-initialise so the module loads even when OPENAI_API_KEY is not yet set
+let _aiClient = null;
+function getAIClient() {
+  if (!_aiClient) {
+    _aiClient = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY || 'not-configured',
+      baseURL: process.env.AI_BASE_URL || 'https://api.openai.com/v1',
+    });
+  }
+  return _aiClient;
+}
 
-const AI_MODEL = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
-const MAX_TOKENS = 500;
+const AI_MODEL = process.env.OPENAI_MODEL || 'llama-3.1-8b-instant';
+const MAX_TOKENS = 700;
 
 const DISCLAIMER =
   '\n\n---\n⚠️ This is AI-generated guidance for informational purposes only. ' +
@@ -126,18 +132,21 @@ const getBudgetAdvice = async (req, res) => {
         ? `Monthly income: $${monthlyIncome}`
         : `Approximate income from last 90 days: $${(totalIncome / 3).toFixed(2)}/month`;
 
+    const marketContext = await getMarketContextForAI();
+
     const userPrompt =
       `The user has the following expense breakdown for the last 90 days:\n${categoryText}\n\n` +
       `${incomeContext}\n` +
-      `Monthly savings goal: $${savingsGoal || 'not set'}\n\n` +
-      'Based on this data, provide 3–5 specific, realistic budget recommendations ' +
+      `Monthly savings goal: $${savingsGoal || 'not set'}\n` +
+      (marketContext ? `\n${marketContext}\n` : '') +
+      '\nBased on this data, provide 3–5 specific, realistic budget recommendations ' +
       'to help them improve their financial habits. Format as a numbered list.';
 
     let advice;
     let isAI = true;
 
     try {
-      const completion = await aiClient.chat.completions.create({
+      const completion = await getAIClient().chat.completions.create({
         model: AI_MODEL,
         max_tokens: MAX_TOKENS,
         messages: [
@@ -187,18 +196,21 @@ const getSavingsSuggestions = async (req, res) => {
         ? (((totalIncome - totalExpenses) / totalIncome) * 100).toFixed(1)
         : 'unknown';
 
+    const marketContext = await getMarketContextForAI();
+
     const userPrompt =
       `The user's top discretionary spending categories over 3 months:\n${categoryText}\n\n` +
       `Current savings rate: ${savingsRate}%\n` +
-      `Monthly savings goal: $${req.user.savingsGoal || 'not set'}\n\n` +
-      'Identify 3 realistic savings opportunities with estimated monthly saving for each. ' +
+      `Monthly savings goal: $${req.user.savingsGoal || 'not set'}\n` +
+      (marketContext ? `\n${marketContext}\n` : '') +
+      '\nIdentify 3 realistic savings opportunities with estimated monthly saving for each. ' +
       'Be specific and practical.';
 
     let suggestions;
     let isAI = true;
 
     try {
-      const completion = await aiClient.chat.completions.create({
+      const completion = await getAIClient().chat.completions.create({
         model: AI_MODEL,
         max_tokens: MAX_TOKENS,
         messages: [
@@ -238,28 +250,68 @@ const chatWithAdvisor = async (req, res) => {
       return res.status(400).json({ message: 'Message cannot exceed 500 characters.' });
     }
 
-    // Build financial context summary for system prompt
+    // ── Build rich financial context from user's actual data ─────────────────
     const userId = req.user._id;
-    const breakdown = await getCategoryBreakdown(userId, 30);
-    const totalIncome = await getMonthlyIncomeSummary(userId, 30);
-    const totalExpenses = breakdown.reduce((sum, c) => sum + c.total, 0);
+    const [breakdown90, breakdown30, totalIncome90, totalIncome30, goals] = await Promise.all([
+      getCategoryBreakdown(userId, 90),
+      getCategoryBreakdown(userId, 30),
+      getMonthlyIncomeSummary(userId, 90),
+      getMonthlyIncomeSummary(userId, 30),
+      Goal.find({ user: userId }).lean(),
+    ]);
 
-    let financialContext = 'User has no recent transaction data.';
-    if (breakdown.length > 0) {
-      const topCategories = breakdown
-        .slice(0, 3)
-        .map((c) => `${c._id}: $${c.total.toFixed(2)}`)
-        .join(', ');
+    const totalExpenses90 = breakdown90.reduce((s, c) => s + c.total, 0);
+    const totalExpenses30 = breakdown30.reduce((s, c) => s + c.total, 0);
+    const monthlyIncome   = req.user.monthlyIncome || (totalIncome90 / 3);
+    const savingsRate     = monthlyIncome > 0
+      ? (((monthlyIncome - totalExpenses30) / monthlyIncome) * 100).toFixed(1)
+      : 'unknown';
+
+    let financialContext = 'User has no transaction data yet.';
+    if (breakdown90.length > 0) {
+      const allCategories = breakdown90
+        .map(c => `  • ${c._id}: $${c.total.toFixed(2)} over 90 days ($${(c.total/3).toFixed(2)}/month avg)`)
+        .join('\n');
+
+      const last30Summary = breakdown30.length > 0
+        ? breakdown30.map(c => `  • ${c._id}: $${c.total.toFixed(2)}`).join('\n')
+        : '  No expenses in last 30 days.';
+
+      const goalsText = goals.length > 0
+        ? goals.map(g => {
+            const pct = Math.min(((g.currentAmount / g.targetAmount) * 100), 100).toFixed(0);
+            const daysLeft = g.targetDate
+              ? Math.ceil((new Date(g.targetDate) - new Date()) / 86400000)
+              : null;
+            return `  • ${g.name}: $${g.currentAmount.toFixed(2)} / $${g.targetAmount.toFixed(2)} (${pct}%)` +
+              (daysLeft !== null ? ` — ${daysLeft > 0 ? daysLeft + ' days left' : 'overdue'}` : '');
+          }).join('\n')
+        : '  No savings goals set.';
+
       financialContext =
-        `Last 30 days – Income: $${totalIncome.toFixed(2)}, ` +
-        `Expenses: $${totalExpenses.toFixed(2)}, ` +
-        `Top categories: ${topCategories}`;
+        `=== USER'S FINANCIAL PROFILE ===\n` +
+        `Monthly income: $${monthlyIncome.toFixed(2)}\n` +
+        `Savings goal: $${req.user.savingsGoal || 'not set'}/month\n` +
+        `Current savings rate (last 30 days): ${savingsRate}%\n` +
+        `Total expenses last 30 days: $${totalExpenses30.toFixed(2)}\n` +
+        `Total expenses last 90 days: $${totalExpenses90.toFixed(2)}\n\n` +
+        `EXPENSE BREAKDOWN (last 90 days):\n${allCategories}\n\n` +
+        `EXPENSE BREAKDOWN (last 30 days):\n${last30Summary}\n\n` +
+        `SAVINGS GOALS:\n${goalsText}\n` +
+        `=================================\n\n` +
+        `When answering, reference the user's ACTUAL numbers above. ` +
+        `Be specific — mention their actual category names and dollar amounts. ` +
+        `Do NOT give generic advice that ignores their data.`;
     }
+
+    const marketContext = await getMarketContextForAI();
 
     const systemWithContext =
       SYSTEM_PROMPT +
-      `\n\nUser's recent financial summary (last 30 days):\n${financialContext}` +
-      '\n\nAlways end your response with: "Remember, this is for informational purposes only."';
+      `\n\n${financialContext}` +
+      (marketContext ? `\n\n${marketContext}` : '') +
+      '\n\nAlways reference the user\'s specific numbers and categories in your response. ' +
+      'End every response with: "Remember, this is for informational purposes only."';
 
     // Trim history to last 10 exchanges to control tokens
     const trimmedHistory = history.slice(-10);
@@ -273,7 +325,7 @@ const chatWithAdvisor = async (req, res) => {
     let reply;
 
     try {
-      const completion = await aiClient.chat.completions.create({
+      const completion = await getAIClient().chat.completions.create({
         model: AI_MODEL,
         max_tokens: MAX_TOKENS,
         messages,
