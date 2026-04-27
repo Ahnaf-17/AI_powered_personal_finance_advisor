@@ -8,6 +8,7 @@ import Chatbot    from './pages/Chatbot';
 import AIAdvisor  from './pages/AIAdvisor';
 import Login      from './pages/Login';
 import Register   from './pages/Register';
+import Profile    from './pages/Profile';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -97,6 +98,7 @@ export default function App() {
           <Route path="/insights"     element={<ProtectedRoute><AppLayout><Insights /></AppLayout></ProtectedRoute>} />
           <Route path="/ai-advisor"   element={<ProtectedRoute><AppLayout><AIAdvisor /></AppLayout></ProtectedRoute>} />
           <Route path="/chat"         element={<ProtectedRoute><AppLayout><Chatbot /></AppLayout></ProtectedRoute>} />
+          <Route path="/profile"      element={<ProtectedRoute><AppLayout><Profile /></AppLayout></ProtectedRoute>} />
           <Route path="*"             element={<NotFound />} />
         </Routes>
       </AuthProvider>

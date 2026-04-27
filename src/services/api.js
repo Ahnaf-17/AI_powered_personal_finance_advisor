@@ -46,8 +46,9 @@ export const updateGoal  = (id, data)  => api.put(`/goals/${id}`, data);
 export const deleteGoal  = (id)        => api.delete(`/goals/${id}`);
 
 // User
-export const getProfile     = ()       => api.get('/users/profile');
-export const updateProfile  = (data)   => api.patch('/users/profile', data);
+export const getProfile      = ()       => api.get('/users/profile');
+export const updateProfile   = (data)   => api.patch('/users/profile', data);
+export const changePassword  = (data)   => api.patch('/users/password', data);
 
 // AI
 export const getBudgetAdvice       = ()             => api.post('/ai/budget-advice');
