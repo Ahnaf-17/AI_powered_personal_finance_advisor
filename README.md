@@ -1,7 +1,6 @@
-﻿# AI-Powered Personal Finance Advisor
+﻿# WealthWise — AI-Powered Personal Finance Advisor
 
-
-A full-stack web application that helps you take control of your personal finances. Track income and expenses, set savings goals, visualise spending with interactive charts, and get AI-powered budget advice — all wrapped in a dark futuristic UI.
+A full-stack web application that helps you take control of your personal finances. Track income and expenses, set savings goals, visualise spending with interactive charts, get AI-powered budget advice, and monitor live Australian market data — all wrapped in a dark glassmorphism UI.
 
 ---
 
@@ -22,9 +21,10 @@ A full-stack web application that helps you take control of your personal financ
 | 📊 **Dashboard** | Real-time income/expense summary, 7-day spending bar chart, category pie chart, savings goals progress |
 | 💳 **Transactions** | Add, view, filter and delete income and expense records by category |
 | 🎯 **Savings Goals** | Create goals with target amounts and dates, track progress with animated bars |
-| 🤖 **AI Advisor** | Personalised budget tips generated from your spending data |
-| 💬 **AI Chatbot** | Conversational assistant for financial questions with suggestion chips |
-| 🔒 **Auth** | JWT-based register/login with protected routes |
+| 🤖 **AI Advisor** | Personalised budget tips generated from your actual 90-day spending data |
+| 💬 **AI Chatbot** | Conversational assistant powered by Groq (Llama 3.1) with your real financial context |
+| 📈 **Market Pulse** | Live-simulated Australian market data — ASX stocks, crypto (AUD), forex and commodities |
+| 🔒 **Auth** | JWT-based register/login with protected routes and NoSQL injection protection |
 | 🌙 **Dark UI** | Glassmorphism dark theme (`#080c14` base, indigo/violet accents) |
 
 ---
@@ -44,7 +44,8 @@ A full-stack web application that helps you take control of your personal financ
 - **JWT** authentication
 - **bcryptjs** password hashing
 - **Helmet** + **CORS** security
-- **OpenAI API** 
+- **Groq API** (Llama 3.1 8B Instant) via OpenAI-compatible SDK
+- **Jest** + **Supertest** — 17 integration tests (auth + transactions)
 
 ---
 
@@ -173,16 +174,17 @@ MONGODB_URI=mongodb://localhost:27017/finance_advisor
 JWT_SECRET=change_this_to_any_long_random_string_abc123xyz
 JWT_EXPIRES_IN=7d
 
-# Optional — only needed for real AI responses
-# Leave these blank if you don't have an OpenAI key
-OPENAI_API_KEY=
-OPENAI_MODEL=gpt-3.5-turbo
+# AI — Groq (free at console.groq.com)
+# Without a key the app shows rule-based budget advice instead
+OPENAI_API_KEY=your_groq_api_key_here
+AI_BASE_URL=https://api.groq.com/openai/v1
+OPENAI_MODEL=llama-3.1-8b-instant
 
 CLIENT_URL=http://localhost:5173
 FRONTEND_URL=http://localhost:5173
 ```
 
-> **AI features are optional.** Without an `OPENAI_API_KEY` the app still works — it shows rule-based budget advice instead.
+> **AI features are optional.** Without a Groq key the app still works — it shows rule-based budget advice instead. Get a free key at **https://console.groq.com**.
 
 Save the file.
 
@@ -309,15 +311,16 @@ AI_powered_personal_finance_advisor/
 │   ├── src/
 │   │   ├── config/
 │   │   │   └── db.js             # MongoDB connection (persistent + fallback)
-│   │   ├── controllers/          # Route handlers
+│   │   ├── controllers/          # Route handlers (auth, ai, market, transactions, goals, users)
 │   │   ├── middleware/
 │   │   │   └── auth.js           # JWT verification
 │   │   ├── models/               # Mongoose schemas
 │   │   ├── routes/               # Express routers
+│   │   ├── tests/                # Jest + Supertest integration tests (17 tests)
 │   │   └── server.js             # Express app entry point
 │   ├── scripts/
 │   │   └── seed.js               # Demo data seeder
-│   └── .env                      # Environment variables
+│   └── .env                      # Environment variables (see .env.example)
 │
 ├── data/db/                      # Local MongoDB data files (git-ignored)
 └── vite.config.js
@@ -357,7 +360,21 @@ All endpoints are prefixed with `/api`.
 ### AI
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/ai/budget-advice` | Get AI budget insights |
-| POST | `/ai/chat` | Send message to AI chatbot |
+| POST | `/ai/budget-advice` | Get AI budget insights based on last 90 days |
+| POST | `/ai/savings-suggestions` | Get AI savings suggestions |
+| POST | `/ai/chat` | Send message to AI chatbot (with financial context) |
+
+### Market
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/market/pulse` | Full Australian market snapshot (stocks, crypto, forex, commodities) |
+| GET | `/market/context` | Market summary string for AI prompt enrichment |
+
+### Users
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/users/profile` | Get current user profile |
+| PATCH | `/users/profile` | Update name, income, savings goal |
+| PATCH | `/users/password` | Change password |
 
 ---
