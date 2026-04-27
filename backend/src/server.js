@@ -1,3 +1,9 @@
+// Disable TLS certificate verification for networks with SSL inspection (dev only)
+// Must be set before any https/openai calls are made
+if (process.env.NODE_ENV !== 'production') {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -10,11 +16,14 @@ const transactionRoutes = require('./routes/transactions');
 const goalRoutes        = require('./routes/goals');
 const userRoutes        = require('./routes/users');
 const aiRoutes          = require('./routes/ai');
+const marketRoutes      = require('./routes/market');
 
 const app = express();
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB — skipped in test mode (tests manage their own connection)
+if (process.env.NODE_ENV !== 'test') {
+  connectDB();
+}
 
 // Middleware
 app.use(helmet());
@@ -38,6 +47,7 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/goals',        goalRoutes);
 app.use('/api/users',        userRoutes);
 app.use('/api/ai',           aiRoutes);
+app.use('/api/market',       marketRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
@@ -51,5 +61,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Internal server error' });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Only bind to a port when this file is run directly (not imported by tests)
+if (require.main === module) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+module.exports = app;

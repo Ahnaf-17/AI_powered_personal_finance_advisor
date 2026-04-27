@@ -36,7 +36,7 @@ const register = async (req, res) => {
 // POST /api/auth/login
 const login = async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password)
+  if (!email || !password || typeof email !== 'string' || typeof password !== 'string')
     return res.status(400).json({ message: 'Please provide email and password.' });
 
   const user = await User.findOne({ email }).select('+password');
