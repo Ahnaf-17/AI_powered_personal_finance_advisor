@@ -55,4 +55,7 @@ export const getSavingsSuggestions = ()             => api.post('/ai/savings-sug
 export const getAIInsights         = ()             => api.post('/ai/budget-advice');
 export const sendChatMessage       = (message, history) => api.post('/ai/chat', { message, history });
 
+// Market
+export const getMarketPulse = () => api.get('/market/pulse');
+
 export default api;
