@@ -91,7 +91,7 @@ This document defines the detailed functional and non-functional requirements fo
 | US-AI-09 | As a user, I want the chatbot to be aware of my recent spending summary so that its answers are personalised. | High |
 | US-AI-10 | As a user, I want the chatbot to politely decline off-topic questions so that I know the scope of its capabilities. | Medium |
 | US-AI-11 | As a user, I want to see my chat history within a session so that I can refer back to previous answers. | Medium |
-| US-AI-12 | As a user, I want the chatbot to remind me its advice is informational so that I am not misled. | High |
+| US-AI-12 | As a user, I want the chatbot to stay within budgeting guidance and avoid presenting itself as licensed financial advice. | High |
 
 ### 4.2 Functional Requirements
 
@@ -119,7 +119,7 @@ This document defines the detailed functional and non-functional requirements fo
 - [ ] Given a non-finance question (e.g. "What is the capital of France?"), the chatbot politely declines.
 - [ ] Given 10 chat exchanges, only the most recent 10 are sent to the API (history trimming works).
 - [ ] Given an API failure, the user sees "Sorry, the assistant is temporarily unavailable. Please try again shortly."
-- [ ] The chatbot response always includes a footer: "This is for informational purposes only."
+- [ ] The chatbot response does not include specific investment, tax, or insurance recommendations.
 
 ---
 

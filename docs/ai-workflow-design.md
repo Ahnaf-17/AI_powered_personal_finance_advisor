@@ -120,7 +120,7 @@ Constraints:
 - If a question is outside budgeting/spending topics, say:
   "That's outside what I can help with here — I focus on budgeting and
    spending management."
-- Always remind the user that suggestions are for informational purposes only
+- Always stay within general budgeting guidance and avoid presenting advice as licensed financial advice
 ```
 
 ---
@@ -140,7 +140,7 @@ Constraints:
    g. Append disclaimer: "This is AI-generated guidance for informational
       purposes only and does not constitute certified financial advice."
    h. Return JSON response
-4. Frontend displays in AIAdvisor page with disclaimer visible
+4. Frontend displays budget and savings responses with the disclaimer visible
 ```
 
 ---
@@ -149,7 +149,7 @@ Constraints:
 
 | Risk | Mitigation |
 |------|-----------|
-| AI produces financial advice beyond scope | System prompt explicitly constrains output; disclaimer appended server-side |
+| AI produces financial advice beyond scope | System prompt explicitly constrains output; budget and savings endpoints append a server-side disclaimer |
 | Token cost overruns | Max token limit set (500 tokens per response); rate limiting on AI endpoints |
 | Biased/inaccurate recommendations | Outputs labelled as "informational guidance only"; user owns final decision |
 | Sensitive data sent to AI | Only aggregated category totals sent — no raw transaction descriptions, no PII |

@@ -45,10 +45,10 @@ This test plan defines the testing strategy, scope, types, and test cases for th
 
 | Component | Details |
 |-----------|---------|
-| Backend | Node.js v22, Express, running on localhost:5000 |
+| Backend | Node.js, Express, running on localhost:5001 |
 | Database | MongoDB local instance (localhost:27017/finance_advisor_test) |
 | Frontend | React + Vite, running on localhost:5173 |
-| AI Provider | OpenAI GPT-3.5-turbo (test with minimal token usage) or Groq free tier |
+| AI Provider | Groq free tier via OpenAI-compatible SDK |
 | Test Data | Sample transaction datasets (minimum 30 transactions per test user) |
 
 ---
@@ -132,7 +132,7 @@ For each AI response (budget advice, savings, chatbot), manually verify:
 
 - [ ] Response is relevant to the user's actual spending data
 - [ ] Response does not contain investment, tax, or insurance advice
-- [ ] Disclaimer text is present
+- [ ] Budget advice and savings suggestions include the disclaimer text
 - [ ] Response is in plain English and understandable to non-financial users
 - [ ] Response does not contain fabricated statistics or false claims
 - [ ] Response is concise (under 300 words)
