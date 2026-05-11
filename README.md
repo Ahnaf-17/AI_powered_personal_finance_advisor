@@ -378,3 +378,5 @@ All endpoints are prefixed with `/api`.
 | PATCH | `/users/password` | Change password |
 
 ---
+
+
