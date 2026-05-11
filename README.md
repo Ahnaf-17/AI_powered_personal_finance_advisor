@@ -38,6 +38,7 @@ A full-stack web application that helps you take control of your personal financ
 - **React Router DOM v7**
 - **Axios**
 
+
 ### Backend
 - **Node.js 22** + **Express 4**
 - **MongoDB** (persistent local) + **Mongoose 8**
