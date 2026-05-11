@@ -14,6 +14,7 @@ A full-stack web application that helps you take control of your personal financ
 
 ---
 
+
 ## Features
 
 | Feature | Description |
