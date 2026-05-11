@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from "../services/api";
 
 const CATEGORIES = ["Food","Transport","Shopping","Entertainment","Health","Utilities","Rent","Salary","Freelance","Investment","Other"];
@@ -11,9 +11,19 @@ export default function AddExpense() {
   const [loading,      setLoading]      = useState(true);
   const [submitting,   setSubmitting]   = useState(false);
   const [filter,       setFilter]       = useState("all");
+  const [search,       setSearch]       = useState("");
   const [editId,       setEditId]       = useState(null);   // null = add mode, string = edit mode
   const [form, setForm] = useState({ type:"expense", amount:"", category:"Food", description:"", date: new Date().toISOString().split("T")[0] });
   const [error, setError] = useState("");
+
+  const visibleTx = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return transactions;
+    return transactions.filter(tx =>
+      tx.category.toLowerCase().includes(q) ||
+      (tx.description || "").toLowerCase().includes(q)
+    );
+  }, [transactions, search]);
 
   const fetchTx = async () => {
     const params = filter !== "all" ? { type: filter } : {};
@@ -167,9 +177,16 @@ export default function AddExpense() {
 
       {/* List */}
       <div className="bg-[#0d1117] rounded-2xl border border-white/5 p-6">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-sm font-bold text-slate-300">Transaction History</h2>
-          <div className="flex gap-1 bg-white/5 rounded-xl p-1">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
+          <h2 className="text-sm font-bold text-slate-300 flex-1">Transaction History</h2>
+          <input
+            type="search"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search category or description…"
+            className="bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 w-full sm:w-52 transition-all"
+          />
+          <div className="flex gap-1 bg-white/5 rounded-xl p-1 flex-shrink-0">
             {["all","expense","income"].map(f => (
               <button key={f} onClick={() => setFilter(f)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all duration-150 ${
@@ -183,14 +200,14 @@ export default function AddExpense() {
           <div className="flex justify-center py-12">
             <div className="w-8 h-8 rounded-full border-4 border-indigo-900 border-t-indigo-400 animate-spin"></div>
           </div>
-        ) : transactions.length === 0 ? (
+        ) : visibleTx.length === 0 ? (
           <div className="text-center py-12 text-slate-600">
             <span className="text-5xl block mb-3">🧾</span>
-            <p className="text-sm">No transactions found.</p>
+            <p className="text-sm">{search ? "No results match your search." : "No transactions found."}</p>
           </div>
         ) : (
           <div className="space-y-1">
-            {transactions.map(tx => (
+            {visibleTx.map(tx => (
               <div key={tx._id} className="flex items-center justify-between gap-3 py-3 px-3 rounded-xl hover:bg-white/5 transition-colors group">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className={`w-10 h-10 flex-shrink-0 rounded-xl flex items-center justify-center text-xl ${tx.type==="income" ? "bg-emerald-500/10" : "bg-rose-500/10"}`}>
