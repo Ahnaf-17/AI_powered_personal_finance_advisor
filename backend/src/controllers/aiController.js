@@ -310,7 +310,7 @@ const chatWithAdvisor = async (req, res) => {
       SYSTEM_PROMPT +
       `\n\n${financialContext}` +
       (marketContext ? `\n\n${marketContext}` : '') +
-        '\n\nAlways reference the user\'s specific numbers and categories in your response.';
+      '\n\nAlways reference the user\'s specific numbers and categories in your response.';
 
     // Trim history to last 10 exchanges to control tokens
     const trimmedHistory = history.slice(-10);

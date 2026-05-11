@@ -13,8 +13,6 @@ const request  = require('supertest');
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 
-jest.setTimeout(45000);
-
 let app;
 let mongoms;
 let token;
@@ -22,7 +20,7 @@ let Transaction;
 let userId;
 
 beforeAll(async () => {
-  mongoms = await MongoMemoryServer.create({ instance: { launchTimeout: 30000 } });
+  mongoms = await MongoMemoryServer.create();
   await mongoose.connect(mongoms.getUri());
   // Import app AFTER mongoose is connected — NODE_ENV=test prevents connectDB() from firing
   app         = require('../server');
@@ -37,9 +35,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await mongoose.disconnect();
-  if (mongoms) {
-    await mongoms.stop();
-  }
+  await mongoms.stop();
 });
 
 function auth(t) { return { Authorization: `Bearer ${t}` }; }

@@ -169,13 +169,13 @@ Open `backend/.env` in any text editor (Notepad is fine) and paste:
 
 ```env
 NODE_ENV=development
-PORT=5001
+PORT=5000
 MONGODB_URI=mongodb://localhost:27017/finance_advisor
 JWT_SECRET=change_this_to_any_long_random_string_abc123xyz
 JWT_EXPIRES_IN=7d
 
 # AI — Groq (free at console.groq.com)
-# Without a key the app shows rule-based budget/savings advice and the chatbot returns an unavailable message
+# Without a key the app shows rule-based budget advice instead
 OPENAI_API_KEY=your_groq_api_key_here
 AI_BASE_URL=https://api.groq.com/openai/v1
 OPENAI_MODEL=llama-3.1-8b-instant
@@ -184,7 +184,7 @@ CLIENT_URL=http://localhost:5173
 FRONTEND_URL=http://localhost:5173
 ```
 
-> **AI features are optional.** Without a Groq key the app still works — budget and savings endpoints fall back to rules-based guidance, and the chatbot returns a temporary unavailable message. Get a free key at **https://console.groq.com**.
+> **AI features are optional.** Without a Groq key the app still works — it shows rule-based budget advice instead. Get a free key at **https://console.groq.com**.
 
 Save the file.
 
@@ -214,7 +214,7 @@ Write-Host "MongoDB started"
 
 ### Step 9 — Seed the database with demo data (optional but recommended)
 
-This creates a demo user with 142 realistic transactions and 5 savings goals so you can see the app working immediately.
+This creates a demo user with 161 realistic transactions and 5 savings goals so you can see the app working immediately.
 
 From the **project root folder**, run:
 
@@ -225,8 +225,8 @@ node backend/scripts/seed.js
 Expected output:
 ```
 ✅ Connected to MongoDB: localhost
-👤 Created user: demo@finance.app
-💳 Inserted 142 transactions
+👤 Creating demo user...
+💳 Inserted 161 transactions
 🎯 Inserted 5 goals
 
 🎉 Seed complete!
@@ -251,11 +251,9 @@ npm run dev
 
 Wait until you see:
 ```
-Server running on port 5001
+Server running on port 5000
 ✅ MongoDB connected (persistent): localhost
 ```
-
-Note: the sample configuration uses port 5001 to avoid common conflicts on macOS where port 5000 may already be reserved by system services.
 
 **Terminal 2 — Start the frontend (open a new terminal window/tab):**
 

@@ -9,7 +9,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
-require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+require('dotenv').config();
 
 const authRoutes        = require('./routes/auth');
 const transactionRoutes = require('./routes/transactions');
