@@ -52,7 +52,6 @@ A full-stack web application that helps you take control of your personal financ
 ## Prerequisites — Install These First
 
 
-
 ### Step 1 — Install Node.js and npm
 
 Node.js is the JavaScript runtime that runs the backend. npm (Node Package Manager) comes bundled with it and is used to install all project libraries.
